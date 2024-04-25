@@ -1,0 +1,11 @@
+config { type: "view" }
+
+select
+        clientOrderId as client_order_id,
+        UTMSource as utm_source,
+        UTMMedium as utm_medium,
+        UTMCampaign as utm_campaign,
+        UTMContent as utm_content,
+        UTMTerm as utm_term
+    from
+        `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`

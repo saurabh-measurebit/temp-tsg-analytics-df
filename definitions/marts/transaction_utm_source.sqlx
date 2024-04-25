@@ -1,0 +1,17 @@
+config { type: "table" }
+
+select 
+    t1.transaction_date,
+    t1.transaction_id,
+    t1.transaction_type,
+    t1.transaction_amount,
+    t1.transaction_fee,
+    t1.product_name,
+    t1.product_category,
+    t1.customer_email ,
+    t1.balance_trans_table_charge_id ,
+    t2.charge_id as id,
+    t2.utm_source
+from  ${ref('joinq4andq2_cust_email')} t1
+left join  ${ref('utmsource_checkoutchamp')}  t2
+on t1.balance_trans_table_charge_id=t2.charge_id

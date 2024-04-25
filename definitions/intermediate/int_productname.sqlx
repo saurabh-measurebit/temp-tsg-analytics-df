@@ -1,0 +1,64 @@
+config { type: "view" }
+
+-- Get product names for subscription charges
+
+with
+
+charges as (
+  select
+    charge_id,
+    case
+      when lower(description) like 'payment for order# %' then 'All Access Membership'
+      when lower(description) like 'order # %, %' and product_name is not null then product_name
+      when lower(description) like 'order # %, [0-9]+' then regexp_extract(description, r'order # \d+, (.+)$')
+      when not lower(description) like 'order # %' and product_name is null then 'CC - ' || description
+      when lower(description) like '%, %' then regexp_extract(description, r', (.+)$')
+      else null
+    end as product_name
+  from ${ref('stg_stripe_charge')}  
+  where
+    lower(description) not like "invoice%"
+),
+
+stripe_charge_invoice as (
+  select
+    charge_date,
+    charge_id,
+    invoice_id
+  from ${ref('stg_stripe_charge')}  
+  where
+    lower(description) like "invoice%"
+),
+
+stripe_invoice as (
+  select
+    invoice_date,
+    invoice_id,
+    product_name,
+    charge_id
+  from ${ref('stg_stripe_invoices')}  
+
+),
+
+invoices as (
+  select
+    charge_date,
+    charge_id,
+    invoice_date,
+    T1.invoice_id,
+    product_name
+  from stripe_charge_invoice T1
+  left join stripe_invoice T2
+  using (charge_id)
+)
+
+
+select
+    charge_id,
+    product_name
+from charges
+union all
+select
+    charge_id,
+    product_name
+from invoices

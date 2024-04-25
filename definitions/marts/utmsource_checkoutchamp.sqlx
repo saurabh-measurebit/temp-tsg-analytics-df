@@ -1,0 +1,11 @@
+config { type: "table" }
+
+-- Get UTM source of Checkout Champ Stripe transactions 
+
+select 
+        charge_id,
+        utm_source
+from ${ref('stg_stripe_charge')}   
+left join ${ref('stg_checkout_champ')}    
+using (client_order_id)
+where client_order_id is not null

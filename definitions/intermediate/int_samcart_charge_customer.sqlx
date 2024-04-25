@@ -1,0 +1,20 @@
+config { type: "view" }
+
+-- Connect charge ID with customer email
+-- from samcart and stripe data
+
+select
+    charge_id,
+    email
+  from ${ref('stg_samcart_charge')} 
+  left join ${ref('stg_samcart_customer')}  
+  using (sam_customer_id)
+
+union all  
+
+select 
+    charge_id,
+    email
+  from ${ref('stg_stripe_charge')}  
+  left join  ${ref('stg_stripe_customer')}   
+  using (stripe_customer_id)

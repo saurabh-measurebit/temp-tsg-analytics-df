@@ -1,0 +1,12 @@
+config { type: "view" }
+
+select
+  created as transaction_date,
+  id as transaction_id,
+  reporting_category as transaction_type,
+  amount,
+  fee,
+  source as charge_id,
+  description as product_name
+from
+  `tsg-transaction-data.stripe_export.stripe_balance_transactions_8589937017`

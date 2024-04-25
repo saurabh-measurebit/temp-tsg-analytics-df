@@ -1,0 +1,4 @@
+config { type: "table" }
+select *
+     from 
+${ref('stg_balancetransaction_startingtable')}  
