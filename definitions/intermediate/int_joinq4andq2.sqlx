@@ -40,9 +40,9 @@ abc as (
     amount,
     fee,
     charge_id,
-    T2.product_name as product_name
-  from balance_trans_ch T1
-  left join charge_product_name T2
+    t2.product_name as product_name
+  from balance_trans_ch t1
+  left join charge_product_name t2
   using(charge_id)
 
 ),
