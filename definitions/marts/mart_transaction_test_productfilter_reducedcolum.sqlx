@@ -10,7 +10,7 @@ select
   product_category
   
 from
- ${ref('transaction_test_productfilter')}    
+ ${ref('mart_transaction_test_productfilter')}    
 -- where
 --   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest\\.com")
 --       or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator\\.com")

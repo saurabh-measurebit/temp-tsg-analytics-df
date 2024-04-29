@@ -11,7 +11,7 @@ select
   customer_email,
   utm_source
 from
-   ${ref('transaction_utm_source')}
+   ${ref('mart_transaction_utm_source')}
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest\\.com")
       or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator\\.com")
