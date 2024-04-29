@@ -28,7 +28,7 @@ charge_product_name as (
     charge_id,
     product_name
   from
-   ${ref('productname')}     
+   ${ref('int_productname')}     
 
 ),
 
