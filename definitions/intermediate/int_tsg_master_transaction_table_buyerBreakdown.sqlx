@@ -1,0 +1,35 @@
+config { type: "view" }
+
+with main as 
+(/*tsg_master_transaction_table_vorrevenue input*/
+select *,
+    min(transaction_date) over (partition by customer_email, groupid) as group_start_date,
+from
+    ${ref('stg_tsg_master_transaction_table_buyerBreakdown')}  ),
+
+prev_start_date as   
+(/*calculate1 calculate*/
+select
+    group_start_date,
+    customer_email,
+    groupid as groupid,
+    lag(group_start_date) over (partition by customer_email order by group_start_date asc) as previous_group_start_date
+from main)
+
+select
+  t2.transaction_date,
+  t2.transaction_id,
+  t2.transaction_type,
+  t2.transaction_amount,
+  t2.transaction_fee,
+  t2.product_name,
+  t2.product_category,
+  t2.customer_email,
+  t2.utm_source,
+  coalesce(date_diff(t2.transaction_date, t1.previous_group_start_date, day), 0) as days
+from prev_start_date t1
+right join
+  main t2
+on
+  t1.customer_email=t2.customer_email
+  and t1.group_start_date=t2.transaction_date

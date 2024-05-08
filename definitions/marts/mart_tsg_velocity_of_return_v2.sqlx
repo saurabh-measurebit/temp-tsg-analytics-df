@@ -1,0 +1,5 @@
+config { type: "table" }
+
+select
+    *
+  from ${ref('int_tsg_velocity_of_return_v2')}

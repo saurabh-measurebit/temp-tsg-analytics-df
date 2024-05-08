@@ -1,0 +1,19 @@
+config { type: "view" }
+
+
+select
+  transaction_date,
+  transaction_id,
+  transaction_type,
+  transaction_amount,
+  Transaction_fee,
+  product_name,
+  product_category,
+  customer_email,
+  utm_source,
+  min(transaction_date) over (partition by customer_email) as customer_min_transDate,
+  if(((min(transaction_date) over (partition by customer_email) is null) 
+    or (transaction_date is null)),0,date_diff(transaction_date,min(transaction_date) over (partition by customer_email), day)) as days_in_system
+from
+  ${ref('mart_transaction_utm_source')} 
+  where regexp_contains(ifnull(transaction_type,""),r"(?i)charge") 

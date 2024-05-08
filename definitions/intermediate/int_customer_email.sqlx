@@ -6,7 +6,7 @@ select
   from ${ref('stg_samcart_charge')} 
   left join ${ref('stg_samcart_customer')}  
   using (sam_customer_id)
-  where where processor_transaction_id like 'py_%' like 'py_%'
+  where charge_id like 'py_%' 
 
 
 union all  

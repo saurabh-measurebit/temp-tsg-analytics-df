@@ -1,0 +1,98 @@
+config { type: "view" }
+
+with day0_365sum  as  
+ (/*sum Email and day0-365 Amounts summarize*/
+    select
+      customer_Email as customer_Email,
+      sum(if((days_in_system=0),transaction_amount,0)) as day0_sum,
+      sum(if((days_in_system>=0 and days_in_system<=7),transaction_amount,0)) as day7_sum,
+      sum(if((days_in_system>=0 and days_in_system<=14),transaction_amount,0)) as day14_sum,
+      sum(if((days_in_system>=0 and days_in_system<=39),transaction_amount,0)) as day30_sum,
+      sum(if((days_in_system>=0 and days_in_system<=69),transaction_amount,0)) as day60_sum,
+      sum(if((days_in_system>=0 and days_in_system<=99),transaction_amount,0)) as day90_sum,
+      sum(if((days_in_system>=0 and days_in_system<=129),transaction_amount,0)) as day120_sum,
+      sum(if((days_in_system>=0 and days_in_system <=365),transaction_amount,0)) as day365_sum,
+      sum(if((days_in_system>=0 ),transaction_amount,0)) as day365Beyond_sum,
+      customer_min_transDate as customer_min_transDate
+    from  ${ref('stg_tsg_velocity_of_return_v2')} 
+    group by
+      customer_Email,
+      customer_min_transDate)
+
+,vor_col as   
+(/*Create All other VOR Columns Calculate*/
+    select
+      customer_Email as customer_Email,
+      product_name as product_name,
+      days_in_system as days_in_system,
+     case
+      when customer_min_transDate is null then ""
+      when days_in_system<=0 then '1'
+      when (days_in_system>=0 and days_in_system<=7) then '2'
+      when (days_in_system>=0
+      and days_in_system<=14) then '3'
+      when (days_in_system>=0 and days_in_system<=30) then '4'
+      when (days_in_system>=0
+      and days_in_system<=60) then '5'
+      when (days_in_system>=0 and days_in_system<=90) then '6'
+      when (days_in_system>=0
+      and days_in_system<=120) then '7'
+      when (days_in_system>=0 and days_in_system<=365) then '8'
+      when (days_in_system>=0
+      and days_in_system>=365) then '9'
+  end
+    as rank,
+    case
+      when customer_min_transDate is null then ""
+      when days_in_system<=0 then "day 0"
+      when (days_in_system>=0 and days_in_system<=7) then "day 7"
+      when (days_in_system>=0
+      and days_in_system<=14) then "day 14"
+      when (days_in_system>=0 and days_in_system<=30) then "day 30"
+      when (days_in_system>=0
+      and days_in_system<=60) then "day 60"
+      when (days_in_system>=0 and days_in_system<=90) then "day 90"
+      when (days_in_system>=0
+      and days_in_system<=120) then "day 120"
+      when (days_in_system>=0 and days_in_system<=365) then "day 365"
+      when (days_in_system>=0
+      and days_in_system>=365) then "day 365+"
+  END
+    as days,
+      product_category as product_category,
+      utm_source as utm_source,
+      transaction_date as transaction_date,
+      transaction_amount as transaction_amount,
+      customer_min_transDate as customer_min_transDate
+    from ${ref('stg_tsg_velocity_of_return_v2')} )
+
+
+
+  select
+    ifnull(t1.customer_email,'') as customer_email ,
+    t1.product_name , 
+    t1.days_in_system  ,
+    t1.rank ,
+    t1.days,
+    t2.day0_sum ,
+    t2.day7_sum ,
+    t2.day14_sum,
+    t2.day30_sum ,
+    t2.day60_sum ,
+    t2.day90_sum ,
+    t2.day120_sum ,
+    t2.day365_sum,
+    t2.day365Beyond_sum ,
+    t1.product_category ,
+    extract(year from transaction_date) as year,
+  extract(month from transaction_date) as month,
+    t1.utm_source as utm_source,
+    t1.transaction_date as transaction_date,
+    t1.transaction_amount as transaction_amount,
+    t1.customer_min_transDate as customer_min_transDate
+  from VOR_col t1
+  left join day0_365sum t2
+  ON
+    t1.customer_email=t2.customer_email
+    order by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+
