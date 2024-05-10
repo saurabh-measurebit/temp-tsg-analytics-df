@@ -1,4 +1,7 @@
-config { type: "table" }
+config { type: "table" ,
+     bigquery: {
+    partitionBy:  "date(transaction_date)"}
+    }
   /*Reduce Columns for Master Transaction Table - All Revenue Calculate*/
 select
   transaction_date,

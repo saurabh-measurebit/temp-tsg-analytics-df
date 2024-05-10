@@ -1,4 +1,7 @@
-config { type: "table" }
+config { type: "table" ,
+     bigquery: {
+    partitionBy:  "date(transaction_date)"}
+    }
 
 select 
     t1.transaction_date,
