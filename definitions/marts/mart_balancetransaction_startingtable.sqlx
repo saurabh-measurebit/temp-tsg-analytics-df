@@ -1,7 +1,7 @@
 config { type: "table" ,
      bigquery: {
-    partitionBy:  "date(transaction_date)"}
+          partitionBy:  "transaction_date"
+     }
 }
 select *
-     from 
-${ref('stg_balancetransaction_startingtable')}  
+from ${ref('stg_balancetransaction_startingtable')}  

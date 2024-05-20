@@ -1,5 +1,4 @@
 config { type: "table" }
 
-select
-    *
-  from ${ref('int_customer_email')}
+select *
+from ${ref('int_customer_email')}

@@ -20,7 +20,7 @@ balance_trans as (
 balance_trans_ch as (
   select *
   from balance_trans
-  where regexp_contains(ifnull(charge_id,""),r"(?i)ch_")
+  where regexp_contains(ifnull(charge_id,""), r"(?i)ch_")
 ),
 
 charge_product_name as (

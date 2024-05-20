@@ -5,8 +5,8 @@ with day0_365sum  as
     select
       customer_Email as customer_Email,
       sum(if((days_in_system=0),transaction_amount,0)) as day0_sum,
-      sum(if((days_in_system>=0 and days_in_system<=7),transaction_amount,0)) as day7_sum,
-      sum(if((days_in_system>=0 and days_in_system<=14),transaction_amount,0)) as day14_sum,
+      sum(if((days_in_system>=0 and days_in_system<=7), transaction_amount, 0)) as day7_sum,
+      sum(if((days_in_system>=0 and days_in_system<=14), transaction_amount,0)) as day14_sum,
       sum(if((days_in_system>=0 and days_in_system<=39),transaction_amount,0)) as day30_sum,
       sum(if((days_in_system>=0 and days_in_system<=69),transaction_amount,0)) as day60_sum,
       sum(if((days_in_system>=0 and days_in_system<=99),transaction_amount,0)) as day90_sum,
@@ -27,14 +27,14 @@ with day0_365sum  as
       days_in_system as days_in_system,
      case
       when customer_min_transDate is null then ""
-      when days_in_system<=0 then '1'
-      when (days_in_system>=0 and days_in_system<=7) then '2'
-      when (days_in_system>=0
+      when days_in_system <= 0 then '1'
+      when (days_in_system >= 0 and days_in_system <= 7) then '2'
+      when (days_in_system >= 0
       and days_in_system<=14) then '3'
-      when (days_in_system>=0 and days_in_system<=30) then '4'
-      when (days_in_system>=0
-      and days_in_system<=60) then '5'
-      when (days_in_system>=0 and days_in_system<=90) then '6'
+      when (days_in_system >= 0 and days_in_system<=30) then '4'
+      when (days_in_system >= 0
+      and days_in_system <= 60) then '5'
+      when (days_in_system >= 0 and days_in_system<=90) then '6'
       when (days_in_system>=0
       and days_in_system<=120) then '7'
       when (days_in_system>=0 and days_in_system<=365) then '8'
@@ -57,7 +57,7 @@ with day0_365sum  as
       when (days_in_system>=0 and days_in_system<=365) then "day 365"
       when (days_in_system>=0
       and days_in_system>=365) then "day 365+"
-  END
+  end
     as days,
       product_category as product_category,
       utm_source as utm_source,
@@ -77,9 +77,9 @@ with day0_365sum  as
     t2.day0_sum ,
     t2.day7_sum ,
     t2.day14_sum,
-    t2.day30_sum ,
-    t2.day60_sum ,
-    t2.day90_sum ,
+    t2.day30_sum,
+    t2.day60_sum,
+    t2.day90_sum,
     t2.day120_sum ,
     t2.day365_sum,
     t2.day365Beyond_sum ,
@@ -92,7 +92,7 @@ with day0_365sum  as
     t1.customer_min_transDate as customer_min_transDate
   from VOR_col t1
   left join day0_365sum t2
-  ON
+  on
     t1.customer_email=t2.customer_email
     order by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 

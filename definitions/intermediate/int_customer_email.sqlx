@@ -8,7 +8,6 @@ select
   using (sam_customer_id)
   where charge_id like 'py_%' 
 
-
 union all  
 
 select 
@@ -18,5 +17,5 @@ select
   left join  ${ref('stg_stripe_customer')}   
   using (stripe_customer_id)
   where
-    charge_id LIKE "ch_%"
+    charge_id like "ch_%"
     and charge_status = true

@@ -1,6 +1,8 @@
 config { type: "table" ,
-     bigquery: {
-    partitionBy:  "date(transaction_date)"}}
+    bigquery: {
+      partitionBy:  "transaction_date"
+    }
+}
 
 select 
   t1.transaction_date,
@@ -13,7 +15,7 @@ select
   t1.charge_id as balance_trans_table_charge_id,
   t2.charge_id as charge_id,
   t2.email as customer_email
-FROM ${ref('mart_joinq4andq2')}   t1
+from ${ref('mart_joinq4andq2')}   t1
 left join  ${ref('mart_customer_email')}   t2
 on t1.charge_id=t2.charge_id
 

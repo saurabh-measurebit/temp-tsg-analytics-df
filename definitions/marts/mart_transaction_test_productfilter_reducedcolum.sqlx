@@ -1,8 +1,10 @@
 config { type: "table" ,
-     bigquery: {
-    partitionBy:  "date(transaction_date)"}
-    }
-  /*Reduce Columns for Master Transaction Table - All Revenue Calculate*/
+  bigquery: {
+    partitionBy:  "transaction_date"
+  }
+}
+
+/*Reduce Columns for Master Transaction Table - All Revenue Calculate*/
 select
   transaction_date,
   transaction_id,
@@ -12,19 +14,4 @@ select
   product_name,
   product_category
   
-from
- ${ref('mart_transaction_test_productfilter')}    
--- where
---   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest\\.com")
---       or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator\\.com")
---       or regexp_contains(ifnull(customer_email,""),r"(?i)topspeedgolf\\.com")
---       or regexp_contains(ifnull(customer_email,""),r"(?i)aboundup\\.com")
---       or regexp_contains(ifnull(customer_email,""),r"(?i)davidroconnell\\.com")
---       or regexp_contains(ifnull(customer_email,""),r"(?i)measurementmarketing\\.io")
---       or regexp_contains(ifnull(customer_email,""),r"(?i)tomitrader\\.com")) )
---   and not((regexp_contains(LOWER(ifnull(product_name,"")),r"(?i)purchase from top speed golf")
---       or regexp_contains(LOWER(ifnull(product_name,"")),r"(?i)1 day renewal product 2")
---       or regexp_contains(LOWER(ifnull(product_name,"")),r"(?i)fake shippable good")
---       or regexp_contains(LOWER(ifnull(product_name,"")),r"(?i)test trial")
---       or regexp_contains(LOWER(ifnull(product_name,"")),r"(?i)taxjar test")
---       or regexp_contains(LOWER(ifnull(product_name,"")),r"(?i)tsg level 1 instructor test")) )
+from ${ref('mart_transaction_test_productfilter')}

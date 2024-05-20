@@ -1,11 +1,21 @@
 config { type: "view" }
 
+
 with main as 
 (/*tsg_master_transaction_table_vorrevenue input*/
-select *,
-    min(transaction_date) over (partition by customer_email, groupid) as group_start_date,
-from
-    ${ref('stg_tsg_master_transaction_table_buyerBreakdown')}  ),
+  select *,
+  from ${ref('stg_tsg_master_transaction_table_buyerBreakdown')} ),
+
+group_start_dates as    
+(
+  select 
+    customer_email, 
+    groupid,
+    min(transaction_date) as group_start_date 
+  from main 
+  group by 1,2
+),
+
 
 prev_start_date as   
 (/*calculate1 calculate*/
@@ -14,7 +24,8 @@ select
     customer_email,
     groupid as groupid,
     lag(group_start_date) over (partition by customer_email order by group_start_date asc) as previous_group_start_date
-from main)
+from group_start_dates)
+
 
 select
   t2.transaction_date,

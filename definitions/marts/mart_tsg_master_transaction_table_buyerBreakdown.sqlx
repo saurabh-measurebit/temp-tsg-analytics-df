@@ -1,6 +1,8 @@
 config { type: "table" ,
-     bigquery: {
-    partitionBy:  "date(transaction_date)"}}
+    bigquery: {
+        partitionBy:  "transaction_date"
+    }
+}
 
 select * 
 from ${ref('int_tsg_master_transaction_table_buyerBreakdown')}

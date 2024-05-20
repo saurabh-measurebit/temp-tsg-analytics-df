@@ -1,7 +1,8 @@
 config { type: "table" ,
-     bigquery: {
-    partitionBy:  "date(transaction_date)"}}
+   bigquery: {
+      partitionBy:  "transaction_date"
+   }
+}
 
 select * 
-   from
-${ref('int_joinq4andq2')} 
+from ${ref('int_joinq4andq2')} 

@@ -1,11 +1,11 @@
 config { type: "view" }
 
 select
-  created as transaction_date,
+  date(datetime(created, "America/New_York"))  as transaction_date,
   id as transaction_id,
   reporting_category as transaction_type,
-  amount,
-  fee,
+  (amount/100) as amount,
+  (fee/100) as fee,
   source as charge_id,
   description as product_name
 from

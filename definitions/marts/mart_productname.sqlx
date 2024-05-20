@@ -1,5 +1,4 @@
 config { type: "table" }
 
 select *
-     from 
-${ref('int_productname')}  
+from ${ref('int_productname')}  
