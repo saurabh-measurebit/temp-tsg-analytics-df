@@ -11,7 +11,5 @@ select
     lower(ifnull(customer_email,"")) as customer_email,
     utm_source,
     dense_rank() over (partition by lower(customer_email) order by transaction_date asc) as groupid
-  from
-    ${ref('mart_transaction_utm_source')} 
-  where
-    (ifnull(transaction_type,"")="charge")
+from ${ref('mart_transaction_utm_source')} 
+where (ifnull(transaction_type,"")="charge")

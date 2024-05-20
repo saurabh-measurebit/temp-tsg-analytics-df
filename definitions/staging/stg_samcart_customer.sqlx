@@ -4,4 +4,4 @@ select
     id as sam_customer_id,
     email,
     created_at as create_date
-  from `tsg-transaction-data.samcart_export.samcart_customers_8589937073` 
+from `tsg-transaction-data.samcart_export.samcart_customers_8589937073` 

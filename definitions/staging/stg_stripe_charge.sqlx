@@ -10,5 +10,4 @@ select
     json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
     description,
     json_extract_scalar(json_query(metadata, '$.clientOrderId')) as client_order_id
-  from
-    `tsg-transaction-data.stripe_export.stripe_charges_8589937017`
+  from `tsg-transaction-data.stripe_export.stripe_charges_8589937017`

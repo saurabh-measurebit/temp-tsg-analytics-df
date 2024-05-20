@@ -5,4 +5,4 @@ select
     id as invoice_id,
     json_extract_scalar(lines, '$.data[0].plan.name') as product_name,
     charge as charge_id
-  from `tsg-transaction-data.stripe_export.stripe_invoices_8589937017`
+from `tsg-transaction-data.stripe_export.stripe_invoices_8589937017`

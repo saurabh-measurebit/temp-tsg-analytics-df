@@ -4,5 +4,5 @@ select
     created_at as charge_date,
     customer_id as sam_customer_id,
     processor_transaction_id as charge_id
-  from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
+from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
   

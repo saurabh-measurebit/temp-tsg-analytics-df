@@ -11,9 +11,8 @@ select
   product_category,
   lower(ifnull(customer_email,"")) as customer_email,
   utm_source,
-  min(transaction_date) over (partition by LOWER(IFNULL(customer_email,"")) ) as customer_min_transDate,
-  if(((min(transaction_date) over (partition by LOWER(IFNULL(customer_email,"")) ) is null) 
+  min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
+  if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null) 
     or (transaction_date is null)),0,date_diff(transaction_date,min(transaction_date) over (partition by LOWER(IFNULL(customer_email,""))), day)) as days_in_system
-from
-  ${ref('mart_transaction_utm_source')} 
-  where regexp_contains(ifnull(transaction_type,""),r"(?i)charge") 
+from ${ref('mart_transaction_utm_source')} 
+where regexp_contains(ifnull(transaction_type,""),r"(?i)charge") 
