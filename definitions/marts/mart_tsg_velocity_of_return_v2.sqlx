@@ -111,7 +111,7 @@ vor_col as (
     transaction_date as transaction_date,
     transaction_amount as transaction_amount,
     customer_min_transDate as customer_min_transDate
-  from first_dates
+  from first_transaction
 )
 
 
