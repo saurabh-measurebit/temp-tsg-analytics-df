@@ -4,4 +4,4 @@ config { type: "table" ,
      }
 }
 select *
-from ${ref('stg_balancetransaction_startingtable')}  
+from ${ref('stg_stripe_balance_transaction')}  

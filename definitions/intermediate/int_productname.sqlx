@@ -53,6 +53,7 @@ invoices as (
 )
 
 
+
 select
     charge_id,
     product_name

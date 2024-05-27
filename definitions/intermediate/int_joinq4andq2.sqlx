@@ -14,7 +14,7 @@ balance_trans as (
     charge_id,
     product_name
   from
-   ${ref('stg_balancetransaction_startingtable')}  
+   ${ref('stg_stripe_balance_transaction')}  
 ),
 
 balance_trans_ch as (

@@ -25,40 +25,30 @@ with day0_365sum  as
       customer_Email as customer_Email,
       product_name as product_name,
       days_in_system as days_in_system,
-     case
-      when customer_min_transDate is null then ""
-      when days_in_system <= 0 then '1'
-      when (days_in_system >= 0 and days_in_system <= 7) then '2'
-      when (days_in_system >= 0
-      and days_in_system<=14) then '3'
-      when (days_in_system >= 0 and days_in_system<=30) then '4'
-      when (days_in_system >= 0
-      and days_in_system <= 60) then '5'
-      when (days_in_system >= 0 and days_in_system<=90) then '6'
-      when (days_in_system>=0
-      and days_in_system<=120) then '7'
-      when (days_in_system>=0 and days_in_system<=365) then '8'
-      when (days_in_system>=0
-      and days_in_system>=365) then '9'
-  end
-    as rank,
-    case
-      when customer_min_transDate is null then ""
-      when days_in_system<=0 then "day 0"
-      when (days_in_system>=0 and days_in_system<=7) then "day 7"
-      when (days_in_system>=0
-      and days_in_system<=14) then "day 14"
-      when (days_in_system>=0 and days_in_system<=30) then "day 30"
-      when (days_in_system>=0
-      and days_in_system<=60) then "day 60"
-      when (days_in_system>=0 and days_in_system<=90) then "day 90"
-      when (days_in_system>=0
-      and days_in_system<=120) then "day 120"
-      when (days_in_system>=0 and days_in_system<=365) then "day 365"
-      when (days_in_system>=0
-      and days_in_system>=365) then "day 365+"
-  end
-    as days,
+      case
+        when customer_min_transDate is null then ""
+        when days_in_system <= 0 then '1'
+        when (days_in_system >= 0 and days_in_system <= 7) then '2'
+        when (days_in_system >= 0 and days_in_system<=14) then '3'
+        when (days_in_system >= 0 and days_in_system<=30) then '4'
+        when (days_in_system >= 0 and days_in_system <= 60) then '5'
+        when (days_in_system >= 0 and days_in_system<=90) then '6'
+        when (days_in_system >= 0 and days_in_system<=120) then '7'
+        when (days_in_system >= 0 and days_in_system<=365) then '8'
+        when (days_in_system >= 0 and days_in_system>=365) then '9'
+      end as rank,
+      case
+        when customer_min_transDate is null then ""
+        when days_in_system<=0 then "day 0"
+        when (days_in_system>=0 and days_in_system<=7) then "day 7"
+        when (days_in_system>=0 and days_in_system<=14) then "day 14"
+        when (days_in_system>=0 and days_in_system<=30) then "day 30"
+        when (days_in_system>=0 and days_in_system<=60) then "day 60"
+        when (days_in_system>=0 and days_in_system<=90) then "day 90"
+        when (days_in_system>=0 and days_in_system<=120) then "day 120"
+        when (days_in_system>=0 and days_in_system<=365) then "day 365"
+        when (days_in_system>=0 and days_in_system>=365) then "day 365+"
+      end as days,
       product_category as product_category,
       utm_source as utm_source,
       transaction_date as transaction_date,

@@ -1,7 +1,34 @@
 config { type: "view" }
 
+-- get transaction data and utm source of customer
+with prime as  (
+  select
+    transaction_date,
+    transaction_id,
+    transaction_type,
+    transaction_amount,
+    Transaction_fee,
+    product_name,
+    product_category,
+    lower(ifnull(customer_email,"")) as customer_email,
+    utm_source,
+    min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
+    if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null)
+      or (transaction_date is null)),0,date_diff(transaction_date,min(transaction_date) over (partition by lower(ifnull(customer_email,""))), day)) as days_in_system
+  from ${ref('mart_transaction_utm_source')} 
+  where regexp_contains(ifnull(transaction_type,""),r"(?i)charge")
+),
 
-select
+-- calculate first transaction date of customer
+cust_min_transaction_date as  (
+  select customer_email,
+    min(transaction_date) as customer_min_transDate 
+  from prime
+  group by 1
+)
+
+-- join first transaction date
+select 
   transaction_date,
   transaction_id,
   transaction_type,
@@ -9,10 +36,11 @@ select
   Transaction_fee,
   product_name,
   product_category,
-  lower(ifnull(customer_email,"")) as customer_email,
+  a.customer_email as customer_email,
   utm_source,
-  min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
-  if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null) 
-    or (transaction_date is null)),0,date_diff(transaction_date,min(transaction_date) over (partition by LOWER(IFNULL(customer_email,""))), day)) as days_in_system
-from ${ref('mart_transaction_utm_source')} 
-where regexp_contains(ifnull(transaction_type,""),r"(?i)charge") 
+  b.customer_min_transDate,
+  if((b.customer_min_transDate is null or a.transaction_date is null),0,date_diff(transaction_date,b.customer_min_transDate,day))
+  as days_in_system
+from prime a
+left join cust_min_transaction_date b
+on a.customer_email = b.customer_email

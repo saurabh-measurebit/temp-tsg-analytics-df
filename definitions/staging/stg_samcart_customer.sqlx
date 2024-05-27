@@ -1,5 +1,6 @@
 config { type: "view" }
 
+-- Samcart customer ID and email
 select
     id as sam_customer_id,
     email,

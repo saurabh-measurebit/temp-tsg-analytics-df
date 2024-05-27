@@ -1,13 +1,14 @@
 config { type: "view" }
 
+-- Stripe charges data
 select
-    created as charge_date,
-    customer as stripe_customer_id,
-    id as charge_id,
-    captured as charge_status,
-    invoice as invoice_id,
-    metadata,
-    json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
-    description,
-    json_extract_scalar(json_query(metadata, '$.clientOrderId')) as client_order_id
-  from `tsg-transaction-data.stripe_export.stripe_charges_8589937017`
+  created as charge_date,
+  customer as stripe_customer_id,
+  id as charge_id,
+  captured as charge_status,
+  invoice as invoice_id,
+  metadata,
+  json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
+  description,
+  json_extract_scalar(json_query(metadata, '$.clientOrderId')) as client_order_id
+from `tsg-transaction-data.stripe_export.stripe_charges_8589937017`

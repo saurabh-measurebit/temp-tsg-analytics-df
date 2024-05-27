@@ -1,4 +1,4 @@
 config { type: "table" }
 
 select *
-from ${ref('int_customer_email')}
+from ${ref('int_chargeid_email')}
