@@ -1,7 +1,5 @@
 config { type: "table" ,
-    bigquery: {
-      partitionBy:  "transaction_date"
-    }
+
 }
 
 -- Query does velocity of return calculations
@@ -37,22 +35,22 @@ cust_min_transaction_date as  (
 
 -- Add first transaction date column
 first_transaction as (
-select 
-  transaction_date,
-  transaction_id,
-  transaction_type,
-  transaction_amount,
-  Transaction_fee,
-  product_name,
-  product_category,
-  a.customer_email as customer_email,
-  utm_source,
-  b.customer_min_transDate,
-  if((b.customer_min_transDate is null or a.transaction_date is null),0,date_diff(transaction_date,b.customer_min_transDate,day))
-  as days_in_system
-from prime                             a
-left join cust_min_transaction_date    b
-on a.customer_email = b.customer_email
+  select 
+    transaction_date,
+    transaction_id,
+    transaction_type,
+    transaction_amount,
+    Transaction_fee,
+    product_name,
+    product_category,
+    a.customer_email as customer_email,
+    utm_source,
+    b.customer_min_transDate,
+    if((b.customer_min_transDate is null or a.transaction_date is null),0,date_diff(transaction_date,b.customer_min_transDate,day))
+    as days_in_system
+  from prime                             a
+  left join cust_min_transaction_date    b
+  on a.customer_email = b.customer_email
 ),
 
 
