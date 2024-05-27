@@ -4,6 +4,8 @@ config { type: "table" ,
   }
 }
 
+-- Query filters out test emails and test products
+
 select
   transaction_date,
   transaction_id,
@@ -14,8 +16,7 @@ select
   product_category,
   customer_email,
   utm_source
-from
-   ${ref('mart_transaction_utm_source')}
+from ${ref('int_stripe_balance_transaction')}
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest\\.com")
       or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator\\.com")

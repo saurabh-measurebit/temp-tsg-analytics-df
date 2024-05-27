@@ -1,9 +1,11 @@
 config { type: "view" }
 
--- Get product names for subscription charges
-
+-- Stripe subscriptions have missing product name. This
+-- query returns a list of Stripe charges and subscriptions
+-- with product name. 
 with
 
+-- Stripe charges
 charges as (
   select
     charge_id,
@@ -20,6 +22,7 @@ charges as (
     lower(description) not like "invoice%"
 ),
 
+-- Subscriptions from Stripe charge table (these have no product name)
 stripe_charge_invoice as (
   select
     charge_date,
@@ -30,15 +33,20 @@ stripe_charge_invoice as (
     lower(description) like "invoice%"
 ),
 
+-- Subscriptions in stg_stripe_invoices table have product name
 stripe_invoice as (
   select
     invoice_date,
     invoice_id,
     product_name,
     charge_id
-  from ${ref('stg_stripe_invoices')}  
+  from ${ref('stg_stripe_invoice')}  
 
 ),
+
+-- The stripe charges table for lacks product name for
+-- subscription charges. This query gets that from the
+-- Stripe invoice table
 
 invoices as (
   select
@@ -52,8 +60,7 @@ invoices as (
   using (charge_id)
 )
 
-
-
+-- Recombine all charges and subscriptions with a more complete set of product names
 select
     charge_id,
     product_name

@@ -1,9 +1,16 @@
-config { type: "view" }
+config { type: "table",
+   bigquery: {
+      partitionBy:  "transaction_date"
+   }
+}
 
--- Add product name to base master transaction table
+-- Query adds product name, email, and source to Stripe
+-- balance transactions so we can add this date to any
+-- charge, refund, dispute and dispute reversal
 
 with
 
+-- Stripe balance transactions
 balance_trans as (
   select
     transaction_date,
@@ -17,22 +24,25 @@ balance_trans as (
    ${ref('stg_stripe_balance_transaction')}  
 ),
 
-balance_trans_ch as (
+-- Transaction charges
+charges as (
   select *
   from balance_trans
   where regexp_contains(ifnull(charge_id,""), r"(?i)ch_")
 ),
 
-charge_product_name as (
+-- Product name definition jlist (for each charge_id)
+product_names as (
   select
     charge_id,
     product_name
   from
-   ${ref('int_productname')}     
+   ${ref('int_stripe_charge_product')}     
 
 ),
 
-abc as (
+-- Get product name for each transaction charge 
+charge_prod_names as (
   select
     transaction_date,
     transaction_id,
@@ -41,36 +51,42 @@ abc as (
     fee,
     charge_id,
     t2.product_name as product_name
-  from balance_trans_ch t1
-  left join charge_product_name t2
+  from charges t1
+  left join product_names t2
   using(charge_id)
 
 ),
 
-balance_trans_py as (
+-- Transaction subscriptions
+subscriptions as (
   select *
   from balance_trans
   where regexp_contains(ifnull(charge_id,""), r"(?i)py_")
 ),
 
-balance_trans_not_ch_py as (
+-- Tranactions that are neither charge nor subcription
+not_charge_nor_sub as (
   select *
   from balance_trans
-  where not((regexp_contains(ifnull(charge_id,""), r"(?i)py_") or regexp_contains(ifnull(charge_id,""),r"(?i)ch_")) )
+  where not( (regexp_contains(ifnull(charge_id,""), r"(?i)py_") or regexp_contains(ifnull(charge_id,""),r"(?i)ch_")) )
 ),
 
+-- NOT SURE WHY WE SEPARATE py_ and ch_ THEN RECOMBINE THEM HERE - ASK MANISHA WHY
 xyz as (
-  select * from balance_trans_py
+  select * from subscriptions
   union all
-  select * from balance_trans_not_ch_py
+  select * from not_charge_nor_sub
 ),
 
-abc_xyz as (
-  select * from abc
+-- Combine charges with subscriptions
+combined as (
+  select * from charge_prod_names
   union all
   select * from xyz
-)
+),
 
+-- Put transactions in categories using product name rules
+categories as (
 select
     transaction_date,
     transaction_id,
@@ -92,8 +108,43 @@ select
         when (regexp_contains(lower(ifnull(product_name,"")),r"swing plate, base model, no alignment rods|swing plate with alignment rods and foam protector") or regexp_contains(lower(ifnull(product_name,"")),r"(?i)divot board|precision impact|check point swing laser|b1 blue strike.*|c3i")) then "Training Aids"
         when regexp_contains(lower(ifnull(product_name,"")),r"inside the ropes with clay(?: ballard)?") then "Inside the Ropes"
         when regexp_contains(lower(ifnull(product_name,"")),r"double your lag in 30 minutes") then "Swing Courses"
-    else
-    "Other"
-end as product_category,
+        else "Other"
+    end as product_category,
     charge_id,
-from abc_xyz
+from combined
+),
+
+-- Add customer emails
+emails as (
+  select 
+    t1.transaction_date,
+    t1.transaction_id ,
+    t1.transaction_type ,
+    t1.amount as transaction_amount,
+    t1.fee as transaction_fee,
+    product_name,
+    t1.product_category,
+    t1.charge_id as balance_trans_table_charge_id,
+    t2.charge_id as charge_id,
+    t2.email as customer_email
+  from categories                              t1
+  left join  ${ref('int_chargeid_email')}      t2
+  on t1.charge_id = t2.charge_id
+)
+
+-- Get source from Checkout Champ
+select 
+    t3.transaction_date,
+    t3.transaction_id,
+    t3.transaction_type,
+    t3.transaction_amount,
+    t3.transaction_fee,
+    t3.product_name,
+    t3.product_category,
+    t3.customer_email ,
+    t3.balance_trans_table_charge_id ,
+    t4.charge_id as id,
+    t4.utm_source
+from  emails                                   t3
+left join  ${ref('int_checkoutchamp_source')}  t4
+on t3.balance_trans_table_charge_id = t4.charge_id

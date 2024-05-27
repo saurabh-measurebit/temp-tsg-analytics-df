@@ -1,8 +1,0 @@
-config { type: "table" ,
-   bigquery: {
-      partitionBy:  "transaction_date"
-   }
-}
-
-select * 
-from ${ref('int_joinq4andq2')} 

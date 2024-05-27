@@ -1,6 +1,9 @@
-config { type: "view" }
+config { type: "table" }
 
---
+-- Query combines subscriptions (py_) from Samcart
+-- with charges from Stripe
+-- ASK MANISHA why not simply use Stripe for all of this data instead of referring to Samcart
+
 select
     charge_id,
     email

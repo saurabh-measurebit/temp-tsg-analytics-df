@@ -1,15 +1,17 @@
-config { type: "table" }
+config { type: "view" }
 
--- Get UTM source of Checkout Champ Stripe transactions 
+-- Query gets utm_source of Stripe charges from Checkout Champ
+
 with 
 
 stg_stripe_charges as   (
     select 
-            client_order_id,
-            charge_id 
+        client_order_id,
+        charge_id 
     from ${ref('stg_stripe_charge')}  
     where client_order_id is not null
 )
+
 select 
     charge_id,
     utm_source
