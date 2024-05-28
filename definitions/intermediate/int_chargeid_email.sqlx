@@ -1,25 +1,28 @@
-config { type: "table" }
+-------------------------------------------
+-- Query combines subscriptions (py_) from
+---Samcart with charges (ch_) from Stripe
+-------------------------------------------
 
--- Query combines subscriptions (py_) from Samcart
--- with charges from Stripe
+config { type: "view" }
+
 -- ASK MANISHA why not simply use Stripe for all of this data instead of referring to Samcart
 
 select
     charge_id,
     email
-from ${ref('stg_samcart_charge')} 
-left join ${ref('stg_samcart_customer')}  
+from ${ref('stg_samcart_charge')}
+left join ${ref('stg_samcart_customer')}
 using (sam_customer_id)
 where charge_id like 'py_%' 
 
 union all  
 
 select 
-  charge_id,
-  email
+    charge_id,
+    email
 from ${ref('stg_stripe_charge')}  
 left join  ${ref('stg_stripe_customer')}   
 using (stripe_customer_id)
 where
-  charge_id like "ch_%"
-  and charge_status = true
+    charge_id like "ch_%"
+    and charge_status = true

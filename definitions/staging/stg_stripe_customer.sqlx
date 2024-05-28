@@ -1,6 +1,9 @@
+--------------------------------
+-- Stripe customer ID and email
+--------------------------------
+
 config { type: "view" }
 
--- Stripe customer ID and email
 select
     id as stripe_customer_id,
     email as email

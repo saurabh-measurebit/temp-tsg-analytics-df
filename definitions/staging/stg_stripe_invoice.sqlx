@@ -1,6 +1,9 @@
+------------------------
+-- Stripe subscriptions
+------------------------
+
 config { type: "view" }
 
--- Stripe subscriptions
 select
     created as invoice_date,
     id as invoice_id,

@@ -1,8 +1,11 @@
-config { type: "view" }
-
+---------------------------------------------------------
 -- Stripe charges
 -- Note - subscriptions in this table lack product name,
 -- which is added in later query
+---------------------------------------------------------
+
+config { type: "view" }
+
 select
   created as charge_date,
   customer as stripe_customer_id,

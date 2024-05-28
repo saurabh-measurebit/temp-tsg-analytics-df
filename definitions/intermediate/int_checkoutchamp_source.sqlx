@@ -1,6 +1,9 @@
-config { type: "view" }
+-------------------------------------------
+-- Query gets utm_source of Stripe charges
+-- from Checkout Champ
+-------------------------------------------
 
--- Query gets utm_source of Stripe charges from Checkout Champ
+config { type: "view" }
 
 with 
 

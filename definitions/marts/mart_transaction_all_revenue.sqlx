@@ -1,0 +1,26 @@
+------------------------------------
+-- Query creates all-revenue table
+------------------------------------
+
+config { type: "incremental",
+  bigquery: {
+    partitionBy:  "transaction_date"
+  }
+}
+${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )}
+
+
+-- Transactions
+select
+  transaction_date,
+  transaction_id,
+  transaction_type,
+  transaction_amount,
+  transaction_fee,
+  product_name,
+  product_category,
+  customer_email,
+  utm_source
+from ${ref('int_stripe_balance_transaction')}
+
+${when(incremental(), `where transaction_date > (select max(transaction_date) from ${self()})`) }

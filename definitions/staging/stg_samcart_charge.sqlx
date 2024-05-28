@@ -1,6 +1,9 @@
+-------------------------------------
+-- Samcart customer ID and charge ID
+-------------------------------------
+
 config { type: "view" }
 
--- Samcart customer ID and charge ID
 select
     created_at as charge_date,
     customer_id as sam_customer_id,

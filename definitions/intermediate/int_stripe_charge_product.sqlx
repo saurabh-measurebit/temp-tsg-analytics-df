@@ -1,8 +1,11 @@
-config { type: "view" }
-
+------------------------------------------------------------
 -- Stripe subscriptions have missing product name. This
 -- query returns a list of Stripe charges and subscriptions
 -- with product name. 
+------------------------------------------------------------
+
+config { type: "view" }
+
 with
 
 -- Stripe charges
@@ -45,7 +48,7 @@ stripe_invoice as (
 ),
 
 -- The stripe charges table for lacks product name for
--- subscription charges. This query gets that from the
+-- subscription charges. This query gets this from the
 -- Stripe invoice table
 
 invoices as (
@@ -60,13 +63,14 @@ invoices as (
   using (charge_id)
 )
 
--- Recombine all charges and subscriptions with a more complete set of product names
+-- Recombine charges and subscriptions with a more complete
+-- set of product names
 select
-    charge_id,
-    product_name
+  charge_id,
+  product_name
 from charges
 union all
 select
-    charge_id,
-    product_name
+  charge_id,
+  product_name
 from invoices

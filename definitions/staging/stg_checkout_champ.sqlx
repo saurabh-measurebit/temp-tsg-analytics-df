@@ -1,6 +1,9 @@
+----------------------------------------
+-- checkout champ order id and UTM data
+----------------------------------------
+
 config { type: "view" }
 
--- checkout champ order id and UTM data
 select
     clientOrderId as client_order_id,
     UTMSource as utm_source,

@@ -1,6 +1,9 @@
+----------------------------------------------------
+-- Stripe balance transaction data and product name
+----------------------------------------------------
+
 config { type: "view" }
 
--- Stripe balance transaction data and product name
 select
   date(datetime(created, "America/New_York"))  as transaction_date,
   id as transaction_id,
