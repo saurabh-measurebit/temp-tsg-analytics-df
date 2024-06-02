@@ -2,17 +2,17 @@
 -- Query creates velocity-of-return table
 ------------------------------------------
 
--- Cohort continues overwriting columns (not incremental)
+-- Cohort updates columns (not incremental)
 config { type: "table" ,
     bigquery: {
         partitionBy:  "transaction_date"
     }
 }
 
+
 with
 
-
--- Transactions plus earliest transaction date
+-- Add first transaction date and days_in_system
 transactions as  (
   select
     transaction_date,
@@ -22,7 +22,7 @@ transactions as  (
     Transaction_fee,
     product_name,
     product_category,
-    lower(ifnull(customer_email,"")) as customer_email,
+    lower(ifnull(customer_email, "")) as customer_email,
     utm_source,
     min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
     if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null)
@@ -31,29 +31,8 @@ transactions as  (
   where regexp_contains(ifnull(transaction_type,""),r"(?i)charge")
 ),
 
-
--- Cohort revenue for each customer
-cohort_revenue  as  (
-  select
-    customer_email as customer_email,
-    sum(if((days_in_system =  0),transaction_amount, 0)) as day0_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 7), transaction_amount, 0)) as day7_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 14), transaction_amount, 0)) as day14_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 39), transaction_amount, 0)) as day30_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 69), transaction_amount, 0)) as day60_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 99), transaction_amount, 0)) as day90_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 129), transaction_amount, 0)) as day120_sum,
-    sum(if((days_in_system >= 0 and days_in_system <= 365), transaction_amount, 0)) as day365_sum,
-    sum(if((days_in_system >= 0 ),transaction_amount, 0)) as day365Beyond_sum,
-    customer_min_transDate
-  from  transactions
-  group by
-    customer_email,
-    customer_min_transDate
-),
-
--- Add rank and days columns 
-vor_columns as (
+-- Add rank & days categories 
+vor_rank_days as (
   select
     customer_email,
     product_name,
@@ -64,61 +43,84 @@ vor_columns as (
     transaction_amount,
     customer_min_transDate,
     case
-      when customer_min_transDate is null then ""
-      when days_in_system <= 0 then '1'
-      when (days_in_system >= 0 and days_in_system <= 7) then '2'
-      when (days_in_system >= 0 and days_in_system<=14) then '3'
-      when (days_in_system >= 0 and days_in_system<=30) then '4'
-      when (days_in_system >= 0 and days_in_system <= 60) then '5'
-      when (days_in_system >= 0 and days_in_system<=90) then '6'
-      when (days_in_system >= 0 and days_in_system<=120) then '7'
-      when (days_in_system >= 0 and days_in_system<=365) then '8'
-      when (days_in_system >= 0 and days_in_system>=365) then '9'
+      when customer_min_transDate is null                  then ''
+      when (days_in_system  = 0                          ) then '1'
+      when (days_in_system >= 0 and days_in_system <=   7) then '2'
+      when (days_in_system >= 0 and days_in_system <=  14) then '3'
+      when (days_in_system >= 0 and days_in_system <=  30) then '4'
+      when (days_in_system >= 0 and days_in_system <=  60) then '5'
+      when (days_in_system >= 0 and days_in_system <=  90) then '6'
+      when (days_in_system >= 0 and days_in_system <= 120) then '7'
+      when (days_in_system >= 0 and days_in_system <= 365) then '8'
+      when (                        days_in_system >  365) then '9'         
     end as rank,
     case
-      when customer_min_transDate is null then ""
-      when days_in_system<=0 then "day 0"
-      when (days_in_system>=0 and days_in_system<=7) then "day 7"
-      when (days_in_system>=0 and days_in_system<=14) then "day 14"
-      when (days_in_system>=0 and days_in_system<=30) then "day 30"
-      when (days_in_system>=0 and days_in_system<=60) then "day 60"
-      when (days_in_system>=0 and days_in_system<=90) then "day 90"
-      when (days_in_system>=0 and days_in_system<=120) then "day 120"
-      when (days_in_system>=0 and days_in_system<=365) then "day 365"
-      when (days_in_system>=0 and days_in_system>=365) then "day 365+"
+      when customer_min_transDate is null                  then ""
+      when (days_in_system  = 0                          ) then "day 0"
+      when (days_in_system >= 0 and days_in_system <=   7) then "day 7"
+      when (days_in_system >= 0 and days_in_system <=  14) then "day 14"
+      when (days_in_system >= 0 and days_in_system <=  30) then "day 30"
+      when (days_in_system >= 0 and days_in_system <=  60) then "day 60"
+      when (days_in_system >= 0 and days_in_system <=  90) then "day 90"
+      when (days_in_system >= 0 and days_in_system <= 120) then "day 120"
+      when (days_in_system >= 0 and days_in_system <= 365) then "day 365"
+      when (                        days_in_system >  365) then "day 365+"  
     end as days
   from transactions
 ),
 
--- Join VOR columns with cohort revenue
-columns_and_metrics as (
+-- Cohort revenues for each customer
+vor_daysums  as  (
   select
-    ifnull(t1.customer_email,'') as customer_email,
-    t1.product_name, 
-    t1.days_in_system,
-    t1.rank,
-    t1.days,
-    t2.day0_sum,
-    t2.day7_sum ,
-    t2.day14_sum,
-    t2.day30_sum,
-    t2.day60_sum,
-    t2.day90_sum,
-    t2.day120_sum,
-    t2.day365_sum,
-    t2.day365Beyond_sum,
-    t1.product_category,
+    customer_email,
+    customer_min_transDate,
+    sum(if((days_in_system                          =   0), transaction_amount, 0)) as day0_sum,
+    sum(if((days_in_system >= 0 and days_in_system <=   7), transaction_amount, 0)) as day7_sum,
+    sum(if((days_in_system >= 0 and days_in_system <=  14), transaction_amount, 0)) as day14_sum,
+    sum(if((days_in_system >= 0 and days_in_system <=  39), transaction_amount, 0)) as day30_sum,
+    sum(if((days_in_system >= 0 and days_in_system <=  69), transaction_amount, 0)) as day60_sum,
+    sum(if((days_in_system >= 0 and days_in_system <=  99), transaction_amount, 0)) as day90_sum,
+    sum(if((days_in_system >= 0 and days_in_system <= 129), transaction_amount, 0)) as day120_sum,
+    sum(if((days_in_system >= 0 and days_in_system <= 365), transaction_amount, 0)) as day365_sum,
+    sum(if((days_in_system >= 0                          ), transaction_amount, 0)) as day365Beyond_sum  -- sum ALL for customer
+  from  transactions
+  group by
+    customer_email,
+    customer_min_transDate
+),
+
+-- Velocity of return table
+-- For multiple transactions, revenue is summed then
+-- averaged by count of transactions (Looker function)
+vor as (
+  select
+    t1.customer_email,
+    transaction_date,
     extract(year from transaction_date) as year,
     extract(month from transaction_date) as month,
-    t1.utm_source as utm_source,
-    t1.transaction_date as transaction_date,
-    t1.transaction_amount as transaction_amount,
-    t1.customer_min_transDate as customer_min_transDate
-  from vor_columns                   t1
-  left join cohort_revenue           t2
+    product_name, 
+    transaction_amount,
+    utm_source,
+    product_category,
+    t1.customer_min_transDate,
+    rank,
+    days_in_system,
+    days,     -- e.g. "day 14"
+    day0_sum,
+    day7_sum ,
+    day14_sum,
+    day30_sum,
+    day60_sum,
+    day90_sum,
+    day120_sum,
+    day365_sum,
+    day365Beyond_sum
+  from      vor_rank_days        t1
+  left join vor_daysums          t2
   on t1.customer_email = t2.customer_email
-  order by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+  order by 1, 2
 )
 
 select *
-from columns_and_metrics
+from vor
+--where customer_email = 'zzhang29@gmail.com' -- COMMENT THIS OUT WHEN NOT TESTING!

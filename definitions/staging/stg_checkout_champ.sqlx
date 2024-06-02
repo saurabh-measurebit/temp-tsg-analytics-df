@@ -1,5 +1,7 @@
 ----------------------------------------
 -- checkout champ order id and UTM data
+-- Use the Checkout champ orders table
+-- because it has the best data, including UTMs.
 ----------------------------------------
 
 config { type: "view" }

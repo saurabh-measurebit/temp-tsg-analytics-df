@@ -1,7 +1,7 @@
 ---------------------------------------------------------
 -- Query adds product name, email, and source to Stripe
 -- balance transactions so we can add the output to any
--- charge, refund, dispute or dispute reversal
+-- charge, refund, dispute or dispute reversal.
 ---------------------------------------------------------
 
 config { type: "incremental",
@@ -14,38 +14,17 @@ ${when(incremental(), `delete ${self()} where transaction_date >  (select max(tr
 
 with
 
--- Stripe balance transactions
-balance_trans as (
-  select
-    transaction_date,
-    transaction_id,
-    transaction_type,
-    amount,
-    fee,
-    charge_id,
-    product_name
-  from
-   ${ref('stg_stripe_balance_transaction')}  
-),
-
--- Transaction charges
-charges as (
+-- Transaction that contain ch_
+trans_ch as (
   select *
-  from balance_trans
+  from ${ref('stg_stripe_balance_transaction')}
   where regexp_contains(ifnull(charge_id,""), r"(?i)ch_")
 ),
 
--- Product-to-charge_id definition list
-product_names as (
-  select
-    charge_id,
-    product_name
-  from
-   ${ref('int_stripe_charge_product')}     
-),
-
--- Get product name for each transaction charge 
-charge_prod_names as (
+-- ch_ & py_ transactions are mostly orders, but ch_
+-- doesn't have product_name (py_ does), so we get it
+-- from Stripe Charges 
+trans_ch_prod as (
   select
     transaction_date,
     transaction_id,
@@ -53,42 +32,50 @@ charge_prod_names as (
     amount,
     fee,
     charge_id,
-    t2.product_name as product_name
-  from charges t1
-  left join product_names t2
-  using(charge_id)
+    t2.product_name
+  from trans_ch                                  t1
+  left join ${ref('int_stripe_charge_product')}  t2
+  using (charge_id)
 ),
 
 -- Transaction subscriptions
-subscriptions as (
+-- trans_subs as (
+--   select *
+--   from ${ref('stg_stripe_balance_transaction')}
+--   where regexp_contains(ifnull(charge_id,""), r"(?i)py_")
+-- ),  
+
+-- Non-ch_ transactions - e.g. fee, payout, refund, dispute, etc
+-- trans_other as (
+--   select *
+--   from ${ref('stg_stripe_balance_transaction')}
+--   where not( (regexp_contains(ifnull(charge_id,""), r"(?i)py_") or regexp_contains(ifnull(charge_id,""),r"(?i)ch_")) )
+-- ),
+
+-- All transaction types other than charges
+--trans_non_charge as (
+--  select * from trans_subs
+--  union all
+--  select * from trans_other
+--),
+
+-- Transactions that DONT contain ch_
+trans_not_ch as (
   select *
-  from balance_trans
-  where regexp_contains(ifnull(charge_id,""), r"(?i)py_")
+  from ${ref('stg_stripe_balance_transaction')}
+  where not regexp_contains(ifnull(charge_id,""),r"(?i)ch_")
 ),
 
--- Other transaction types - fee, payout, refund, dispute, etc
-not_charge_nor_sub as (
-  select *
-  from balance_trans
-  where not( (regexp_contains(ifnull(charge_id,""), r"(?i)py_") or regexp_contains(ifnull(charge_id,""),r"(?i)ch_")) )
-),
-
--- All transaction types EXCEPT charge
-other_trans_types as (
-  select * from subscriptions
+-- Recombine ch_ transactions that have added product
+-- name with the rest of the transactions
+trans_all as (
+  select * from trans_ch_prod
   union all
-  select * from not_charge_nor_sub
+  select * from trans_not_ch
 ),
 
--- Combine charges with subscriptions
-combined as (
-  select * from charge_prod_names
-  union all
-  select * from other_trans_types
-),
-
--- Put transactions in categories using product name rules
-categories as (
+-- Categorize transactions
+add_categories as (
 select
   transaction_date,
   transaction_id,
@@ -113,11 +100,11 @@ select
     else "Other"
   end as product_category,
   charge_id,
-from combined
+from trans_all
 ),
 
 -- Add customer email from chargeid_email
-emails as (
+add_emails as (
   select 
     t1.transaction_date,
     t1.transaction_id ,
@@ -129,34 +116,33 @@ emails as (
     t1.charge_id as balance_trans_table_charge_id,
     t2.charge_id as charge_id,
     t2.email as customer_email
-  from categories                              t1
+  from add_categories                          t1
   left join  ${ref('int_chargeid_email')}      t2
   on t1.charge_id = t2.charge_id
 ),
 
--- Get source from Checkout Champ
-sources as (
+-- Add source from Checkout Champ
+add_sources as (
   select 
-    t3.transaction_date,
-    t3.transaction_id,
-    t3.transaction_type,
-    t3.transaction_amount,
-    t3.transaction_fee,
-    t3.product_name,
-    t3.product_category,
-    t3.customer_email ,
-    t3.balance_trans_table_charge_id ,
-    t4.charge_id as id,
-    t4.utm_source
-  from  emails                                   t3
-  left join  ${ref('int_checkoutchamp_source')}  t4
-  on t3.balance_trans_table_charge_id = t4.charge_id
+    t1.transaction_date,
+    t1.transaction_id,
+    t1.transaction_type,
+    t1.transaction_amount,
+    t1.transaction_fee,
+    t1.product_name,
+    t1.product_category,
+    t1.customer_email ,
+    t1.balance_trans_table_charge_id ,
+    t2.charge_id as id,
+    t2.utm_source
+  from  add_emails                               t1
+  left join  ${ref('int_checkoutchamp_source')}  t2
+  on t1.balance_trans_table_charge_id = t2.charge_id
 )
 
-
--- Remove for test transactions
+-- Remove test transactions
 select *
-from sources
+from add_sources
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator.com")

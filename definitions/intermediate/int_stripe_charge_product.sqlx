@@ -1,7 +1,8 @@
 ------------------------------------------------------------
--- Stripe subscriptions have missing product name. This
--- query returns a list of Stripe charges and subscriptions
--- with product name. 
+-- Stripe subscriptions lack product name. Stripe invoices
+-- lack charge_id. We combine both subscriptions with
+-- charge_id and product_name. Query creates a list of 
+-- charges and subscriptions with product name. 
 ------------------------------------------------------------
 
 config { type: "view" }
@@ -20,51 +21,47 @@ charges as (
       when lower(description) like '%, %' then regexp_extract(description, r', (.+)$')
       else null
     end as product_name
-  from ${ref('stg_stripe_charge')}  
+  from ${ref('stg_stripe_charge')}
   where
     lower(description) not like "invoice%"
 ),
 
--- Subscriptions from Stripe charge table (these have no product name)
+-- Stripe charges lack subscription product_name
 stripe_charge_invoice as (
   select
     charge_date,
     charge_id,
     invoice_id
-  from ${ref('stg_stripe_charge')}  
+  from ${ref('stg_stripe_charge')}
   where
     lower(description) like "invoice%"
 ),
 
--- Subscriptions in stg_stripe_invoices table have product name
+-- Stripe invoices lack charge_id
 stripe_invoice as (
   select
     invoice_date,
     invoice_id,
     product_name,
     charge_id
-  from ${ref('stg_stripe_invoice')}  
-
+  from ${ref('stg_stripe_invoice')}
 ),
 
--- The stripe charges table for lacks product name for
--- subscription charges. This query gets this from the
--- Stripe invoice table
-
+-- Combine Stripe charge subscriptions with invoices
+-- to get both charge_id and product name
 invoices as (
   select
     charge_date,
     charge_id,
     invoice_date,
-    T1.invoice_id,
+    t1.invoice_id,
     product_name
-  from stripe_charge_invoice T1
-  left join stripe_invoice T2
+  from stripe_charge_invoice    t1
+  left join stripe_invoice      t2
   using (charge_id)
 )
 
--- Recombine charges and subscriptions with a more complete
--- set of product names
+-- Recombine charges with subscriptions that have product_name
 select
   charge_id,
   product_name

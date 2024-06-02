@@ -7,6 +7,7 @@ config { type: "view" }
 
 with 
 
+-- Stripe charges
 stg_stripe_charges as   (
     select 
         client_order_id,
@@ -15,6 +16,7 @@ stg_stripe_charges as   (
     where client_order_id is not null
 )
 
+-- utm source from Checkout Champ
 select 
     charge_id,
     utm_source

@@ -12,7 +12,7 @@ ${when(incremental(), `delete ${self()} where transaction_date >  (select max(tr
 
 with
 
--- Charges plus groupid (inidicates the transaction being 1st... or nth for customer)
+-- groupid indicates transaction order for customer (1, 2... n)
 transactions as (
   select
     transaction_date,
@@ -29,17 +29,17 @@ transactions as (
   where ifnull(transaction_type, "") = "charge"
 ),
 
--- Not sure of the logic here (???)
+-- Find date of nth transaction of a customer
 group_start_dates as (
   select 
     customer_email, 
     groupid,
     min(transaction_date) as group_start_date 
   from transactions 
-  group by 1,2
+  group by 1, 2
 ),
 
--- Not sure of the logic here (???)
+-- Find date of previous transaction for a customer
 prev_start_date as (
   select
     group_start_date,
@@ -49,27 +49,28 @@ prev_start_date as (
   from group_start_dates
 ),
 
--- Add days since (from current transaction to previous transaction) to int_balance_trans
-final as (
+-- Number of days since current to previous transaction
+-- Used to categorize buyers as active, new or reactivated
+buyer_breakdown as (
   select
-    t2.transaction_date,
-    t2.transaction_id,
-    t2.transaction_type,
-    t2.transaction_amount,
-    t2.transaction_fee,
-    t2.product_name,
-    t2.product_category,
-    t2.customer_email,
-    t2.utm_source,
+    transaction_date,
+    transaction_id,
+    transaction_type,
+    transaction_amount,
+    transaction_fee,
+    product_name,
+    product_category,
+    t1.customer_email,
+    utm_source,
     coalesce(date_diff(t2.transaction_date, t1.previous_group_start_date, day), 0) as days
-  from prev_start_date              t1
-  right join transactions           t2
+  from prev_start_date         t1
+  right join transactions      t2
   on
     t1.customer_email = t2.customer_email
     and t1.group_start_date = t2.transaction_date
 )
 
 select *
-from final
+from buyer_breakdown
 
 ${when(incremental(), `where transaction_date > (select max(transaction_date) from ${self()})`) }

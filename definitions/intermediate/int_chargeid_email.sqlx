@@ -1,11 +1,14 @@
--------------------------------------------
--- Query combines subscriptions (py_) from
----Samcart with charges (ch_) from Stripe
--------------------------------------------
+---------------------------------------------------
+-- Query combines subscriptions (py_) from Samcart
+-- with charges (ch_) from Stripe.
+
+-- Stripe charges endpoint does not contain py_
+-- So we get them from Samcart.
+-- Stripe is working to fix this. Recheck later.
+---------------------------------------------------
 
 config { type: "view" }
 
--- ASK MANISHA why not simply use Stripe for all of this data instead of referring to Samcart
 
 select
     charge_id,
