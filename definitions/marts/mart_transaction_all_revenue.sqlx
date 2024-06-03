@@ -21,6 +21,6 @@ select
   product_category,
   customer_email,
   utm_source
-from ${ref('int_stripe_balance_transaction')}
+from ${ref('int_master_transaction')}
 
 ${when(incremental(), `where transaction_date > (select max(transaction_date) from ${self()})`) }

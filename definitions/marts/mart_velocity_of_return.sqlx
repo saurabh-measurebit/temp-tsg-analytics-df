@@ -27,7 +27,7 @@ transactions as  (
     min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
     if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null)
       or (transaction_date is null)), 0, date_diff(transaction_date, min(transaction_date) over (partition by lower(ifnull(customer_email,""))), day)) as days_in_system
-  from ${ref('int_stripe_balance_transaction')}
+  from ${ref('int_master_transaction')}
   where regexp_contains(ifnull(transaction_type,""),r"(?i)charge")
 ),
 
