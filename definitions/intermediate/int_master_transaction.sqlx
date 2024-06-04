@@ -1,15 +1,24 @@
----------------------------------------------------------
--- Query adds product name, email, and source to Stripe
--- balance transactions so we can add the output to any
--- charge, refund, dispute or dispute reversal.
----------------------------------------------------------
+
 
 config { type: "incremental",
    bigquery: {
       partitionBy:  "transaction_date"
    }
 }
-${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )}
+
+
+
+pre_operations {
+  ${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )} 
+
+}
+
+---------------------------------------------------------
+-- Query adds product name, email, and source to Stripe
+-- balance transactions so we can add the output to any
+-- charge, refund, dispute or dispute reversal.
+---------------------------------------------------------
+
 
 
 with
@@ -139,6 +148,7 @@ add_sources as (
   left join  ${ref('int_checkoutchamp_source')}  t2
   on t1.balance_trans_table_charge_id = t2.charge_id
 )
+
 
 -- Remove test transactions
 select *

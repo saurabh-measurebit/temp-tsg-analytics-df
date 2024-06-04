@@ -7,6 +7,7 @@ config { type: "incremental",
     partitionBy:  "transaction_date"
   }
 }
+
 ${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )}
 
 
