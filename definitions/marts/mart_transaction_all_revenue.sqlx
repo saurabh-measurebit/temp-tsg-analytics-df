@@ -8,7 +8,11 @@ config { type: "incremental",
   }
 }
 
-${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )}
+pre_operations {
+  ${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )}
+
+
+}
 
 
 -- Transactions
