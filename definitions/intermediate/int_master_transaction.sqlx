@@ -9,7 +9,7 @@ config { type: "incremental",
 
 
 pre_operations {
-  ${when(incremental(), `delete ${self()} where transaction_date >  (select max(transaction_date) from ${self()});` )} 
+  ${when(incremental(), `delete ${self()} where transaction_date >=  (select max(transaction_date) from ${self()});` )} 
 
 }
 
@@ -168,4 +168,4 @@ where
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)taxjar test")
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)tsg level 1 instructor test")) )
 
-${when(incremental(), `and transaction_date > (select max(transaction_date) from ${self()})`) }
+${when(incremental(), `and transaction_date >= (select max(transaction_date) from ${self()})`) }
