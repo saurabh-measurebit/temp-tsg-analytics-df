@@ -2,17 +2,13 @@
 -- Query creates all-revenue table
 ------------------------------------
 
-config { type: "incremental",
-  bigquery: {
-    partitionBy:  "transaction_date"
-  }
+config { type: "table" ,
+    bigquery: {
+        partitionBy:  "transaction_date"
+    }
 }
 
-pre_operations {
-  ${when(incremental(), `delete from ${self()} where transaction_date >=  (select max(transaction_date) from ${self()});` )}
 
-
-}
 
 
 -- Transactions
@@ -28,4 +24,3 @@ select
   utm_source
 from ${ref('int_master_transaction')}
 
-${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }

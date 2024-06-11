@@ -1,17 +1,17 @@
 
 
-config { type: "incremental",
-   bigquery: {
-      partitionBy:  "transaction_date"
-   }
+config { type: "table" ,
+    bigquery: {
+        partitionBy:  "transaction_date"
+    }
 }
 
 
 
-pre_operations {
-  ${when(incremental(), `delete from ${self()} where transaction_date >=  (select max(transaction_date) from ${self()});` )} 
+-- pre_operations {
+--   ${when(incremental(), `delete from ${self()} where transaction_date >=  (select max(transaction_date) from ${self()});` )} 
 
-}
+-- }
 
 ---------------------------------------------------------
 -- Query adds product name, email, and source to Stripe
@@ -172,4 +172,4 @@ where
 
 select *
 from final
-${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
+-- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }

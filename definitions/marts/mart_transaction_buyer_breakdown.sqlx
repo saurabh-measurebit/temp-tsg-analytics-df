@@ -2,15 +2,12 @@
 -- Query creates buyer-breakdown table
 ----------------------------------------
 
-config { type: "incremental" ,
+config { type: "table" ,
     bigquery: {
         partitionBy:  "transaction_date"
     }
 }
 
-pre_operations {
-  ${when(incremental(), `delete from ${self()} where transaction_date >=  (select max(transaction_date) from ${self()});` )}
-}
 
 with
 
@@ -75,4 +72,3 @@ buyer_breakdown as (
 select *
 from buyer_breakdown
 
-${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
