@@ -151,9 +151,8 @@ add_sources as (
 
 
 -- Remove test transactions
-final as
-(
-  select *
+final as (
+select *
 from add_sources
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest.com")
@@ -171,8 +170,6 @@ where
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)tsg level 1 instructor test")) )
 )
 
-
-select
-  *
+select *
 from final
 ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
