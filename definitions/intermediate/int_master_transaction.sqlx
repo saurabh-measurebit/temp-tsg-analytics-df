@@ -107,6 +107,7 @@ select
     when regexp_contains(lower(ifnull(product_name,"")),r"inside the ropes with clay(?: ballard)?") then "Inside the Ropes"
     when regexp_contains(lower(ifnull(product_name,"")),r"double your lag in 30 minutes") then "Swing Courses"
     when regexp_contains(lower(ifnull(product_name,"")),r"repayment for disputed charge") then "Disputes" 
+    when regexp_contains(lower(ifnull(product_name,"")),r"minute posture fix") then "Posture" 
     else "Other"
   end as product_category,
   charge_id,
