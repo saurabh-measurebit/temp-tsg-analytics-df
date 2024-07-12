@@ -9,8 +9,6 @@ config { type: "table" ,
 }
 
 
-
-
 -- Transactions
 select
   transaction_date,

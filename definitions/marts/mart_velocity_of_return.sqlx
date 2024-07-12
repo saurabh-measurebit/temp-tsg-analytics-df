@@ -123,4 +123,4 @@ vor as (
 
 select *
 from vor
---where customer_email = 'zzhang29@gmail.com' -- COMMENT THIS OUT WHEN NOT TESTING!
+--where customer_email = 'zzhang29@gmail.com' -- COMMENT THIS LINE WHEN NOT TESTING!

@@ -12,6 +12,7 @@ select
   id as charge_id,
   captured as charge_status,
   invoice as invoice_id,
+  description, -- "Order #" comes from Membermouse
   metadata,
   json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
   description,
