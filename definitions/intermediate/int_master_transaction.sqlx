@@ -63,14 +63,14 @@ select
   fee,
   product_name,
   case
-    when regexp_contains(lower(ifnull(product_name,"")),r"founding member.*|.*all access.*|.*trial.*all access.*|.*trial all access.*|quick start package.*|all access membership.*|.*special offer.*20 minute shallowing fix.*|.*all access.*bonus|null|^[ ]$|^78$|^43$|^75$|^62$|^136$|^77$|^150$|^83$|^101$|^142$|^135$|^1$|^79$|^44$|^2$|^65$|^42$|^33$|$1 membership|^$|aa membership|147") then "All Access Membership"
+    when regexp_contains(lower(ifnull(product_name,"")),r"founding member.*|.*all access.*|.*trial.*all access.*|.*trial all access.*|quick start package.*|all access membership.*|.*special offer.*20 minute shallowing fix.*|.*all access.*bonus|null|^[ ]$|^78$|^43$|^75$|^62$|^136$|^77$|^150$|^83$|^101$|^142$|^135$|^1$|^79$|^44$|^2$|^65$|^42$|^33$|$1 membership|^$|aa membership|147") and not (regexp_contains(lower(ifnull(product_name,"")),r"reviews")) then "All Access Membership"
     when regexp_contains(lower(ifnull(product_name,"")),r"distance masterclass|20 minute distance fix.*") then "20 Minute Distance Fix"
-    when (not (regexp_contains(lower(ifnull(product_name,"")),r"all access"))
+    when (not (regexp_contains(lower(ifnull(product_name,"")),r"all access|in person"))   
       and regexp_contains(lower(ifnull(product_name,"")),r"20-minute shallowing fix|20 minute shallowing fix|20msf live payment|20 msf \\(\\$10\\)|134")) 
       then "20 Minute Shallowing Fix"
     when regexp_contains(lower(ifnull(product_name,"")),r"ball striking masterclass.*|ball striking master class") then "Ball Striking Masterclass"
     when regexp_contains(lower(ifnull(product_name,"")),r"quick start report$|152|quick start") then "Quick Start Report"
-    when (regexp_contains(lower(ifnull(product_name,"")),r"unlimited online reviews|monthly (unlimited )?online swing reviews|monthly online unlimited swing reviews|rocket fuel swing reviews|rocket fuel swing reviews w/ robin rosado|110|114|121|94|123|108|112|monthly unlimited online lessons with clay ballard|rocket fuel|unlimited swing reviews") and not (regexp_contains(lower(ifnull(product_name,"")),r"swing plate.*")) ) then "Unlimited Swing Reviews"
+    when (regexp_contains(lower(ifnull(product_name,"")),r"unlimited online reviews|monthly (unlimited )?online swing reviews|monthly online unlimited swing reviews|rocket fuel swing reviews|rocket fuel swing reviews w/ robin rosado|110|114|121|94|123|108|112|monthly unlimited online lessons with clay ballard|rocket fuel|unlimited swing reviews|reviews") and not (regexp_contains(lower(ifnull(product_name,"")),r"swing plate.*")) ) then "Unlimited Swing Reviews"
     when regexp_contains(lower(ifnull(product_name,"")),r".*in-person lesson with.*|.*in person.*|2 day.*with robin rosado.*|.*in-person.*") then "In Person Lesson"
     when regexp_contains(lower(ifnull(product_name,"")),r"tsg distance golf clinic.*|distance clinic.*") then "Clinic"
     when (regexp_contains(lower(ifnull(product_name,"")),r"swing plate|swing plate, base model, no alignment rods|swing plate with alignment rods and foam protector") or regexp_contains(lower(ifnull(product_name,"")),r"(?i)divot board|precision impact|check point swing laser|b1 blue strike.*|c3i|45° square strike wedge")) then "Training Aids"
@@ -149,4 +149,5 @@ where
 
 select *
 from final
+
 -- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
