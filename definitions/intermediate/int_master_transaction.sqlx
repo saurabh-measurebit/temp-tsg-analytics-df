@@ -31,7 +31,8 @@ trans_ch_prod as (
     amount,
     fee,
     charge_id,
-    coalesce(t2.product_name,t1.product_name) as product_name
+    coalesce(t2.product_name,t1.product_name) as product_name,
+    description
   from trans_ch                                  t1
   left join ${ref('int_stripe_charge_product')}  t2
   using (charge_id)
@@ -39,7 +40,7 @@ trans_ch_prod as (
 
 -- Transactions that DONT contain ch_
 trans_not_ch as (
-  select *
+  select *,product_name as description
   from ${ref('stg_stripe_balance_transaction')}
   where not regexp_contains(ifnull(charge_id,""),r"(?i)ch_")
 ),
@@ -80,6 +81,7 @@ select
     when regexp_contains(lower(ifnull(product_name,"")),r"ball-then-turf masterclass|btmc") then "Ball-Then-Turf Mastercass" 
     else "Other"
   end as product_category,
+  description,
   charge_id,
 from trans_all
 ),
@@ -93,6 +95,7 @@ add_emails as (
     t1.amount as transaction_amount,
     t1.fee as transaction_fee,
     product_name,
+    description,
     t1.product_category,
     t1.charge_id as balance_trans_table_charge_id,
     t2.charge_id as charge_id,
@@ -114,6 +117,7 @@ add_sources as (
     t1.product_category,
     t1.customer_email ,
     t1.balance_trans_table_charge_id ,
+    description,
     t2.charge_id as id,
     t2.utm_source
   from  add_emails                               t1
