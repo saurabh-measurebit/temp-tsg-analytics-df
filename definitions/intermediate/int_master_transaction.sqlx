@@ -13,7 +13,7 @@ config { type: "table" ,
 with
 
 -- Transaction that contain ch_
-trans_ch as (
+stripe_trans_ch as (
   select *
   from ${ref('stg_stripe_balance_transaction')}
   where regexp_contains(ifnull(charge_id,""), r"(?i)ch_")
@@ -23,7 +23,7 @@ trans_ch as (
 -- doesn't have product_name (py_ does), so we get it
 -- from Stripe Charges 
 --if product name is null in trans_ch , try in int_stripe_charge_product
-trans_ch_prod as (
+stripe_trans_ch_prod as (
   select
     transaction_date,
     transaction_id,
@@ -33,13 +33,13 @@ trans_ch_prod as (
     charge_id,
     coalesce(t2.product_name,t1.product_name) as product_name,
     description
-  from trans_ch                                  t1
+  from stripe_trans_ch                                  t1
   left join ${ref('int_stripe_charge_product')}  t2
   using (charge_id)
 ),
 
 -- Transactions that DONT contain ch_
-trans_not_ch as (
+stripe_trans_not_ch as (
   select *,product_name as description
   from ${ref('stg_stripe_balance_transaction')}
   where not regexp_contains(ifnull(charge_id,""),r"(?i)ch_")
@@ -47,48 +47,22 @@ trans_not_ch as (
 
 -- Recombine ch_ transactions that have added product
 -- name with the rest of the transactions
-trans_all as (
-  select * from trans_ch_prod
+stripe_trans_all as (
+  select * from stripe_trans_ch_prod
   union all
-  select * from trans_not_ch
+  select * from stripe_trans_not_ch
 ),
 
--- Categorize transactions
-add_categories as (
-select
-  transaction_date,
-  transaction_id,
-  transaction_type,
-  amount,
-  fee,
-  product_name,
-  case
-    when regexp_contains(lower(ifnull(product_name,"")),r"founding member.*|.*all access.*|.*trial.*all access.*|.*trial all access.*|quick start package.*|all access membership.*|.*special offer.*20 minute shallowing fix.*|.*all access.*bonus|null|^[ ]$|^78$|^43$|^75$|^62$|^136$|^77$|^150$|^83$|^101$|^142$|^135$|^1$|^79$|^44$|^2$|^65$|^42$|^33$|$1 membership|^$|aa membership|147") and not (regexp_contains(lower(ifnull(product_name,"")),r"reviews")) then "All Access Membership"
-    when regexp_contains(lower(ifnull(product_name,"")),r"distance masterclass|20 minute distance fix.*") then "20 Minute Distance Fix"
-    when (not (regexp_contains(lower(ifnull(product_name,"")),r"all access|in person"))   
-      and regexp_contains(lower(ifnull(product_name,"")),r"20-minute shallowing fix|20 minute shallowing fix|20msf live payment|20 msf \\(\\$10\\)|134")) 
-      then "20 Minute Shallowing Fix"
-    when regexp_contains(lower(ifnull(product_name,"")),r"ball striking masterclass.*|ball striking master class") then "Ball Striking Masterclass"
-    when regexp_contains(lower(ifnull(product_name,"")),r"quick start report$|152|quick start") then "Quick Start Report"
-    when (regexp_contains(lower(ifnull(product_name,"")),r"unlimited online reviews|monthly (unlimited )?online swing reviews|monthly online unlimited swing reviews|rocket fuel swing reviews|rocket fuel swing reviews w/ robin rosado|110|114|121|94|123|108|112|monthly unlimited online lessons with clay ballard|rocket fuel|unlimited swing reviews|reviews") and not (regexp_contains(lower(ifnull(product_name,"")),r"swing plate.*")) ) then "Unlimited Swing Reviews"
-    when regexp_contains(lower(ifnull(product_name,"")),r".*in-person lesson with.*|.*in person.*|2 day.*with robin rosado.*|.*in-person.*") then "In Person Lesson"
-    when regexp_contains(lower(ifnull(product_name,"")),r"tsg distance golf clinic.*|distance clinic.*") then "Clinic"
-    when (regexp_contains(lower(ifnull(product_name,"")),r"swing plate|swing plate, base model, no alignment rods|swing plate with alignment rods and foam protector") or regexp_contains(lower(ifnull(product_name,"")),r"(?i)divot board|precision impact|check point swing laser|b1 blue strike.*|c3i|45° square strike wedge")) then "Training Aids"
-    when regexp_contains(lower(ifnull(product_name,"")),r"inside the ropes with clay(?: ballard)?") then "Inside the Ropes"
-    when regexp_contains(lower(ifnull(product_name,"")),r"double your lag in 30 minutes") then "Swing Courses"
-    when regexp_contains(lower(ifnull(product_name,"")),r"repayment for disputed charge") then "Disputes" 
-    when regexp_contains(lower(ifnull(product_name,"")),r"minute posture fix") then "Posture" 
-    when regexp_contains(lower(ifnull(product_name,"")),r"ball-then-turf masterclass|btmc") then "Ball-Then-Turf Mastercass"
-    when regexp_contains(lower(ifnull(product_name,"")),r"b29 blue brick") then "ShotCraft"  
-    else "Other"
-  end as product_category,
-  description,
-  charge_id,
-from trans_all
+-- Add stripe merchant column
+stripe_merchant as (
+    select
+        *,
+        'stripe' as merchant
+    from stripe_trans_all
 ),
 
 -- Add customer email from chargeid_email
-add_emails as (
+stripe_add_emails as (
   select 
     t1.transaction_date,
     t1.transaction_id ,
@@ -97,17 +71,17 @@ add_emails as (
     t1.fee as transaction_fee,
     product_name,
     description,
-    t1.product_category,
     t1.charge_id as balance_trans_table_charge_id,
     t2.charge_id as charge_id,
-    t2.email as customer_email
-  from add_categories                          t1
+    t2.email as customer_email,
+    t1.merchant
+  from stripe_merchant                         t1
   left join  ${ref('int_chargeid_email')}      t2
   on t1.charge_id = t2.charge_id
 ),
 
 -- Add source from Checkout Champ
-add_sources as (
+stripe_add_sources as (
   select 
     t1.transaction_date,
     t1.transaction_id,
@@ -115,22 +89,76 @@ add_sources as (
     t1.transaction_amount,
     t1.transaction_fee,
     t1.product_name,
-    t1.product_category,
-    t1.customer_email ,
-    t1.balance_trans_table_charge_id ,
-    description,
-    t2.charge_id as id,
-    t2.utm_source
-  from  add_emails                               t1
+    t1.customer_email,
+    t2.utm_source,
+    merchant
+  from  stripe_add_emails                        t1
   left join  ${ref('int_checkoutchamp_source')}  t2
   on t1.balance_trans_table_charge_id = t2.charge_id
 ),
 
+-- Paypal merchant transactions
+paypal_merchant as (
+    select
+        transaction_date,
+        transaction_id,
+        transaction_type,
+        transaction_amount,
+        cast(null as numeric) as transaction_fee,
+        product_name,
+        customer_email,
+        utm_source,
+        merchant
+    from ${ref('int_checkoutchamp_paypal')}
+),
+
+-- Comine Stripe and Paypal transactions
+merchants_combined as (
+    select *
+    from paypal_merchant
+    union all
+    select *
+    from stripe_add_sources
+),
+
+-- Categorize transactions by product_name rules
+categorized as (
+  select
+    transaction_date,
+    transaction_id,
+    transaction_type,
+    transaction_amount,
+    transaction_fee,
+    product_name,
+    customer_email,
+    case
+      when regexp_contains(lower(ifnull(product_name,"")),r"founding member.*|.*all access.*|.*trial.*all access.*|.*trial all access.*|quick start package.*|all access membership.*|.*special offer.*20 minute shallowing fix.*|.*all access.*bonus|null|^[ ]$|^78$|^43$|^75$|^62$|^136$|^77$|^150$|^83$|^101$|^142$|^135$|^1$|^79$|^44$|^2$|^65$|^42$|^33$|$1 membership|^$|aa membership|147") and not (regexp_contains(lower(ifnull(product_name,"")),r"reviews")) then "All Access Membership"
+      when regexp_contains(lower(ifnull(product_name,"")),r"distance masterclass|20 minute distance fix.*") then "20 Minute Distance Fix"
+      when (not (regexp_contains(lower(ifnull(product_name,"")),r"all access|in person"))   
+        and regexp_contains(lower(ifnull(product_name,"")),r"20-minute shallowing fix|20 minute shallowing fix|20msf live payment|20 msf \\(\\$10\\)|134")) then "20 Minute Shallowing Fix"
+      when regexp_contains(lower(ifnull(product_name,"")),r"ball striking masterclass.*|ball striking master class") then "Ball Striking Masterclass"
+      when regexp_contains(lower(ifnull(product_name,"")),r"quick start report$|152|quick start") then "Quick Start Report"
+      when (regexp_contains(lower(ifnull(product_name,"")),r"unlimited online reviews|monthly (unlimited )?online swing reviews|monthly online unlimited swing reviews|rocket fuel swing reviews|rocket fuel swing reviews w/ robin rosado|110|114|121|94|123|108|112|monthly unlimited online lessons with clay ballard|rocket fuel|unlimited swing reviews|reviews") and not (regexp_contains(lower(ifnull(product_name,"")),r"swing plate.*")) ) then "Unlimited Swing Reviews"
+      when regexp_contains(lower(ifnull(product_name,"")),r".*in-person lesson with.*|.*in person.*|2 day.*with robin rosado.*|.*in-person.*") then "In Person Lesson"
+      when regexp_contains(lower(ifnull(product_name,"")),r"tsg distance golf clinic.*|distance clinic.*") then "Clinic"
+      when (regexp_contains(lower(ifnull(product_name,"")),r"swing plate|swing plate, base model, no alignment rods|swing plate with alignment rods and foam protector") or regexp_contains(lower(ifnull(product_name,"")),r"(?i)divot board|precision impact|check point swing laser|b1 blue strike.*|c3i|45° square strike wedge")) then "Training Aids"
+      when regexp_contains(lower(ifnull(product_name,"")),r"inside the ropes with clay(?: ballard)?") then "Inside the Ropes"
+      when regexp_contains(lower(ifnull(product_name,"")),r"double your lag in 30 minutes") then "Swing Courses"
+      when regexp_contains(lower(ifnull(product_name,"")),r"repayment for disputed charge") then "Disputes" 
+      when regexp_contains(lower(ifnull(product_name,"")),r"minute posture fix") then "Posture" 
+      when regexp_contains(lower(ifnull(product_name,"")),r"ball-then-turf masterclass|btmc") then "Ball-Then-Turf Mastercass"
+      when regexp_contains(lower(ifnull(product_name,"")),r"b29 blue brick") then "ShotCraft"  
+      else "Other"
+    end as product_category,
+    utm_source,
+    merchant
+  from merchants_combined
+),
 
 -- Filter out test transactions
-final as (
+remove_tests as (
 select *
-from add_sources
+from categorized
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)measurebit.com")
@@ -149,6 +177,6 @@ where
 )
 
 select *
-from final
+from remove_tests
 
 -- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }

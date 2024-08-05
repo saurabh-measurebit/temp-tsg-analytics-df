@@ -1,0 +1,27 @@
+--------------------------------------------------
+-- Paypal transactions coming from checkout champ
+--------------------------------------------------
+
+config { type: "view" }
+
+select
+    date(dateCreated) as transaction_date,
+    clientOrderId as transaction_id,
+    case
+    when txnType = 'SALE' then 'charge'
+    when txnType = 'REFUND' then 'refund'
+    when txnType = 'VOID' then 'void'
+    end as transaction_type,
+    cast(totalAmount as numeric) as transaction_amount,
+    -- transaction_fee,
+    json_extract_scalar(items[0], '$.product') as product_name,
+    emailAddress as customer_email,
+    merchantTxnId as charge_id,
+    case
+        when lower(merchant) like '%paypal%' then 'paypal'
+        when lower(merchant) like '%stripe%' then 'stripe'
+    end as merchant
+from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074`
+where
+    lower(merchant) not like '%test%'
+    and lower(json_extract_scalar(items[0], '$.product')) not like '% test%'

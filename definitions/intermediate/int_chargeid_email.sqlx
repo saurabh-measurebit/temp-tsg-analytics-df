@@ -24,7 +24,7 @@ select
     charge_id,
     email
 from ${ref('stg_stripe_charge')}  
-left join  ${ref('stg_stripe_customer')}   
+left join  ${ref('stg_stripe_customer')}
 using (stripe_customer_id)
 where
     charge_id like "ch_%"

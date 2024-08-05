@@ -1,0 +1,41 @@
+-------------------------------------------------------------
+-- Paypal transactions, joined with orders to get utm_source
+-------------------------------------------------------------
+
+config { type: "view" }
+
+with
+
+paypal_transactions as (
+    select
+        transaction_date,
+        transaction_id,
+        charge_id,
+        transaction_type,
+        transaction_amount,
+        -- transaction_fee,
+        product_name,
+        customer_email,
+        'paypal' as merchant
+    from ${ref('stg_checkoutchamp_transactions')}  
+    where lower(merchant) like '%paypal%'
+),
+
+paypal_orders as (
+    select
+        client_order_id,
+        utm_source
+    from ${ref('stg_checkoutchamp_orders')}  
+),
+
+-- Get source from paypal_orders joining on checkout champ user_id
+joined as (
+    select
+        * except(client_order_id)
+    from paypal_transactions    t1
+    left join paypal_orders     t2
+    on t1.transaction_id = t2.client_order_id
+)
+
+select *
+from joined

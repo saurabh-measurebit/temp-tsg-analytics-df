@@ -21,6 +21,6 @@ select
     charge_id,
     utm_source
 from stg_stripe_charges
-left join ${ref('stg_checkout_champ')}    
+left join ${ref('stg_checkoutchamp_orders')}    
 using (client_order_id)
 
