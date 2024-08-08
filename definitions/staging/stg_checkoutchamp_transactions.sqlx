@@ -5,7 +5,7 @@
 config { type: "view" }
 
 select
-    date(dateCreated) as transaction_date,
+    date(datetime(dateCreated, "America/New_York")) as transaction_date,
     clientOrderId as transaction_id,
     case
     when txnType = 'SALE' then 'charge'

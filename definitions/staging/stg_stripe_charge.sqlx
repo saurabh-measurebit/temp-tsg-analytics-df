@@ -7,7 +7,7 @@
 config { type: "view" }
 
 select
-  created as charge_date,
+  date(datetime(created, "America/New_York"))  as charge_date,
   customer as stripe_customer_id,
   id as charge_id,
   captured as charge_status,

@@ -5,7 +5,7 @@
 config { type: "view" }
 
 select
-    date(created_at) as charge_date,
+    date(datetime(created_at, "America/New_York")) as charge_date,
     customer_id as sam_customer_id,
     order_id as transaction_id,
     processor_transaction_id as charge_id,
@@ -16,5 +16,4 @@ select
     total / 100 as charge_amount,
     lower(processor_name) as processor_name
 from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
-where test_mode = false
-and processor_name = 'PayPal'
+    where test_mode = false
