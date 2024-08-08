@@ -4,10 +4,7 @@
 -- charge, refund, dispute or dispute reversal.
 ---------------------------------------------------------
 
-config { type: "table" ,
-    bigquery: {
-        partitionBy:  "transaction_date"
-    }
+config { type: "view" ,
 }
 
 with
@@ -109,7 +106,7 @@ paypal_merchant as (
         customer_email,
         utm_source,
         merchant
-    from ${ref('int_paypal_charges')}
+    from ${ref('int_checkoutchamp_paypal')}
 ),
 
 -- Comine Stripe and Paypal transactions
@@ -176,7 +173,16 @@ where
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)tsg level 1 instructor test")) )
 )
 
-select *
-from remove_tests
-
--- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
+-- 
+select
+  count(transaction_id) as transactions,
+  sum(transaction_amount) as transaction_amount,
+  -- transaction_fee,
+  -- product_name,
+  -- product_category,
+  -- customer_email,
+  -- utm_source
+from categorized
+where
+  transaction_type = 'charge'
+  and transaction_date between '2024-07-21' and '2024-07-27'

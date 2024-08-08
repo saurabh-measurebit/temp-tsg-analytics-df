@@ -5,8 +5,16 @@
 config { type: "view" }
 
 select
-    created_at as charge_date,
+    date(created_at) as charge_date,
     customer_id as sam_customer_id,
-    processor_transaction_id as charge_id
+    order_id as transaction_id,
+    processor_transaction_id as charge_id,
+    case
+        when charge_refund_status = 'refunded' then 'refund'
+        else 'charge'
+    end as charge_type,
+    total / 100 as charge_amount,
+    lower(processor_name) as processor_name
 from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
-  
+where test_mode = false
+and processor_name = 'PayPal'

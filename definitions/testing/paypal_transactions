@@ -1,0 +1,30 @@
+config { type: "view" }
+
+with
+-- Paypal merchant transactions
+paypal_merchant as (
+    select
+        transaction_date,
+        transaction_id,
+        transaction_type,
+        transaction_amount,
+        cast(null as numeric) as transaction_fee,
+        product_name,
+        customer_email,
+        utm_source,
+        merchant
+    from ${ref('int_checkoutchamp_paypal')}
+)
+
+select
+  count(transaction_id) as transactions,
+  sum(transaction_amount) as transaction_amount,
+  -- transaction_fee,
+  -- product_name,
+  -- product_category,
+  -- customer_email,
+  -- utm_source
+from paypal_merchant
+where
+  transaction_type = 'charge'
+  and transaction_date between '2024-07-21' and '2024-07-27'

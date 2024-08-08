@@ -1,0 +1,101 @@
+-------------------------------------------------------------
+-- Paypal transactions, joined with orders to get utm_source
+-------------------------------------------------------------
+
+config { type: "view" }
+
+with
+
+-- Checkout Champ paypal transactions
+cc_transactions as (
+    select
+        transaction_date,
+        transaction_id,
+        charge_id,
+        transaction_type,
+        transaction_amount,
+        -- transaction_fee,
+        product_name,
+        customer_email,
+        'paypal' as merchant
+    from ${ref('stg_checkoutchamp_transactions')}  
+    where lower(merchant) like '%paypal%'
+),
+
+-- Checkout Champ orders
+cc_orders as (
+    select
+        client_order_id,
+        utm_source
+    from ${ref('stg_checkoutchamp_orders')}  
+),
+
+-- Get Checkout Champ source
+cc_joined as (
+    select
+        * except(client_order_id),
+        'checkout champ' as cart
+    from cc_transactions    t1
+    left join cc_orders     t2
+    on t1.transaction_id = t2.client_order_id
+),
+
+-- Samcart paypal charges
+sc_charges as (
+    select
+        charge_date as transaction_date,
+        transaction_id,
+        charge_id,
+        charge_type as transaction_type,
+        charge_amount as transaction_amount,
+        sam_customer_id,
+        processor_name as merchant
+    from ${ref('stg_samcart_charge')} 
+    where processor_name = 'paypal'
+),
+
+-- Samcart paypal orders
+sc_orders as (
+    select
+        transaction_id,
+        utm_source,
+        product_name
+    from ${ref('stg_samcart_order')}
+    where processor_name != 'stripe'
+),
+
+-- Samcart customers
+sc_customers as (
+    select
+        sam_customer_id,
+        email as customer_email
+    from ${ref('stg_samcart_customer')}  
+),
+
+-- Get Samcart source and email 
+sc_joined as (
+    select
+        transaction_date,
+        cast(transaction_id as string),	
+        charge_id,
+        transaction_type,	
+        transaction_amount,	
+        product_name,
+        customer_email,
+        merchant,
+        utm_source,
+        'samcart' as cart
+    from sc_charges
+    left join sc_orders using(transaction_id)
+    left join sc_customers using(sam_customer_id)
+),
+
+unioned as (
+    select * from cc_joined
+    union all
+    select * from sc_joined
+
+)
+
+select *
+from unioned
