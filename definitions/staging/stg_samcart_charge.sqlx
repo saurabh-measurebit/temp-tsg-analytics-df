@@ -13,7 +13,10 @@ select
         when charge_refund_status = 'refunded' then 'refund'
         else 'charge'
     end as charge_type,
-    total / 100 as charge_amount,
+    case
+        when charge_refund_status = 'refunded' then - total / 100
+        else total / 100
+    end as charge_amount,
     lower(processor_name) as processor_name
 from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
-    where test_mode = false
+where test_mode = false

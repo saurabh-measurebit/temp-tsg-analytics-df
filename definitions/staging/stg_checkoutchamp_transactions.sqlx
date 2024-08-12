@@ -12,7 +12,10 @@ select
     when txnType = 'REFUND' then 'refund'
     when txnType = 'VOID' then 'void'
     end as transaction_type,
-    cast(totalAmount as numeric) as transaction_amount,
+    case
+        when txnType = 'REFUND' then -cast(totalAmount as numeric)
+        else cast(totalAmount as numeric)
+    end as transaction_amount,
     -- transaction_fee,
     json_extract_scalar(items[0], '$.product') as product_name,
     emailAddress as customer_email,
@@ -24,4 +27,3 @@ select
 from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074`
 where
     lower(merchant) not like '%test%'
-    and lower(json_extract_scalar(items[0], '$.product')) not like '% test%'

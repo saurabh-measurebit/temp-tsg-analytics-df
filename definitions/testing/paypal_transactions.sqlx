@@ -66,13 +66,13 @@ stripe_add_emails as (
   select 
     t1.transaction_date,
     t1.transaction_id ,
-    t2.charge_id as charge_id,
     t1.transaction_type ,
     t1.amount as transaction_amount,
     t1.fee as transaction_fee,
     product_name,
     description,
-    t1.charge_id as balance_trans_table_charge_id,
+    t2.charge_id as charge_id,
+    t2.charge_id as balance_trans_table_charge_id,
     t2.email as customer_email,
     t1.merchant
   from stripe_merchant                         t1
@@ -181,5 +181,6 @@ where
 
 select *
 from remove_tests
+where merchant = 'stripe' and transaction_type = 'refund'
 
 -- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }

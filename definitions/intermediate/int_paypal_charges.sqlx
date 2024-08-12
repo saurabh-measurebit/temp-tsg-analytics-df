@@ -78,8 +78,11 @@ sc_joined as (
         transaction_date,
         cast(transaction_id as string),	
         charge_id,
-        transaction_type,	
-        transaction_amount,	
+        transaction_type,
+        case
+            when transaction_type = 'refund' and transaction_amount > 0 then transaction_amount
+            else transaction_amount
+        end as transaction_amount,
         product_name,
         customer_email,
         merchant,
@@ -99,3 +102,4 @@ unioned as (
 
 select *
 from unioned
+where transaction_type = 'refund'
