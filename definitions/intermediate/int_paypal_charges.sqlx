@@ -102,4 +102,3 @@ unioned as (
 
 select *
 from unioned
-where transaction_type = 'refund'
