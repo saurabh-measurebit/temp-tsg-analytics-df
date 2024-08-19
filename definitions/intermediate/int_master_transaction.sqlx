@@ -92,7 +92,7 @@ stripe_add_sources as (
     t1.product_name,
     t1.customer_email,
     t2.utm_source,
-    merchant
+    merchant,
   from  stripe_add_emails                        t1
   left join  ${ref('int_checkoutchamp_source')}  t2
   on t1.balance_trans_table_charge_id = t2.charge_id
