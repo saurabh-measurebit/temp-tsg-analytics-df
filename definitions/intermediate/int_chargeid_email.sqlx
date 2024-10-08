@@ -4,7 +4,7 @@
 
 -- Stripe charges endpoint does not contain py_
 -- So we get them from Samcart.
--- Samcart is working to fix this. Recheck later.
+-- Stripe is working to fix this. Recheck later.
 ---------------------------------------------------
 
 config { type: "view" }

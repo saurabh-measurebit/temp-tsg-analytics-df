@@ -1,5 +1,5 @@
 -------------------------------------------------------------
--- Paypal transactions, joined with orders to get utm_source
+-- Paypal transactions, joined with orders to get utms
 -------------------------------------------------------------
 
 config { type: "view" }
@@ -26,8 +26,10 @@ cc_transactions as (
 cc_orders as (
     select
         client_order_id,
-        utm_source
-    from ${ref('stg_checkoutchamp_orders')}  
+        utm_source,
+        utm_medium,
+        utm_campaign
+    from ${ref('stg_checkoutchamp_orders')}
 ),
 
 -- Get Checkout Champ source
@@ -59,6 +61,8 @@ sc_orders as (
     select
         transaction_id,
         utm_source,
+        utm_medium,
+        utm_campaign,
         product_name
     from ${ref('stg_samcart_order')}
     where processor_name != 'stripe'
@@ -87,6 +91,8 @@ sc_joined as (
         customer_email,
         merchant,
         utm_source,
+        utm_medium,
+        utm_campaign,
         'samcart' as cart
     from sc_charges
     left join sc_orders using(transaction_id)

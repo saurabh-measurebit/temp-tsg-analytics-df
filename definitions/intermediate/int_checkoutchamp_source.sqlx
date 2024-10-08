@@ -1,5 +1,5 @@
 -------------------------------------------
--- Query gets utm_source of Stripe charges
+-- Query gets utms of Stripe charges
 -- from Checkout Champ
 -------------------------------------------
 
@@ -19,7 +19,9 @@ stg_stripe_charges as   (
 -- utm source from Checkout Champ
 select 
     charge_id,
-    utm_source
+    utm_source,
+    utm_medium,
+    utm_campaign
 from stg_stripe_charges
 left join ${ref('stg_checkoutchamp_orders')}    
 using (client_order_id)

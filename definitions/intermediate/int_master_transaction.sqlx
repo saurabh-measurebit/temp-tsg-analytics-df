@@ -12,17 +12,17 @@ config { type: "table" ,
 
 with
 
--- Transaction that contain ch_
+-- Stripe transactions that contain ch_
 stripe_trans_ch as (
   select *
   from ${ref('stg_stripe_balance_transaction')}
   where regexp_contains(ifnull(charge_id,""), r"(?i)ch_")
 ),
 
--- ch_ & py_ transactions are mostly orders, but ch_
--- doesn't have product_name (py_ does), so we get it
--- from Stripe Charges 
---if product name is null in trans_ch , try in int_stripe_charge_product
+-- Stripe ch_ & py_ transactions are mostly orders,
+-- but ch_ doesn't have product_name (py_ does), so
+-- we get it from Stripe Charges if product name is
+-- null in trans_ch, try in int_stripe_charge_product
 stripe_trans_ch_prod as (
   select
     transaction_date,
@@ -38,15 +38,15 @@ stripe_trans_ch_prod as (
   using (charge_id)
 ),
 
--- Transactions that DONT contain ch_
+-- Stripe transactions that DONT contain ch_
 stripe_trans_not_ch as (
   select *,product_name as description
   from ${ref('stg_stripe_balance_transaction')}
   where not regexp_contains(ifnull(charge_id,""),r"(?i)ch_")
 ),
 
--- Recombine ch_ transactions that have added product
--- name with the rest of the transactions
+-- Recombine Stripe ch_ transactions that have added
+-- product name with the rest of the transactions
 stripe_trans_all as (
   select * from stripe_trans_ch_prod
   union all
@@ -61,7 +61,7 @@ stripe_merchant as (
     from stripe_trans_all
 ),
 
--- Add customer email from chargeid_email
+-- Add Stripe customer email from chargeid_email
 stripe_add_emails as (
   select 
     t1.transaction_date,
@@ -80,8 +80,8 @@ stripe_add_emails as (
   on t1.charge_id = t2.charge_id
 ),
 
--- Add source from Checkout Champ
-stripe_add_sources as (
+-- Add Stripe UTMs from Checkout Champ
+stripe_add_utms as (
   select 
     t1.transaction_date,
     t1.transaction_id,
@@ -92,7 +92,9 @@ stripe_add_sources as (
     t1.product_name,
     t1.customer_email,
     t2.utm_source,
-    merchant,
+    t2.utm_medium,
+    t2.utm_campaign,
+    merchant
   from  stripe_add_emails                        t1
   left join  ${ref('int_checkoutchamp_source')}  t2
   on t1.balance_trans_table_charge_id = t2.charge_id
@@ -110,6 +112,8 @@ paypal_merchant as (
         product_name,
         customer_email,
         utm_source,
+        utm_medium,
+        utm_campaign,
         merchant
     from ${ref('int_paypal_charges')}
 ),
@@ -120,7 +124,7 @@ merchants_combined as (
     from paypal_merchant
     union all
     select *
-    from stripe_add_sources
+    from stripe_add_utms
 ),
 
 -- Categorize transactions by product_name rules
@@ -154,6 +158,8 @@ categorized as (
       else "Other"
     end as product_category,
     utm_source,
+    utm_medium,
+    utm_campaign,
     merchant
   from merchants_combined
 ),

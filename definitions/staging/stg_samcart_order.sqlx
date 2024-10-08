@@ -7,6 +7,8 @@ config { type: "view" }
 select
     id as transaction_id,
     json_extract_scalar(utm_parameters, '$.source') as utm_source,
+    json_extract_scalar(utm_parameters, '$.medium') as utm_medium,
+    json_extract_scalar(utm_parameters, '$.campaign') as utm_campaign,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
     lower(processor_name) as processor_name
 from `tsg-transaction-data.samcart_export.samcart_orders_8589937073`
