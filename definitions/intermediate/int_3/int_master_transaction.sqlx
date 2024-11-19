@@ -1,7 +1,5 @@
 ---------------------------------------------------------
--- Query adds product name, email, and source to Stripe
--- balance transactions so we can add the output to any
--- charge, refund, dispute or dispute reversal.
+-- Query combines transactions from Stripe and Paypal
 ---------------------------------------------------------
 
 config { type: "table" ,
@@ -12,110 +10,40 @@ config { type: "table" ,
 
 with
 
--- Stripe transactions that contain ch_
-stripe_trans_ch as (
-  select *
-  from ${ref('stg_stripe_balance_transaction')}
-  where regexp_contains(ifnull(charge_id,""), r"(?i)ch_")
+-- Stripe transactions
+stripe_merchant as (
+  select 
+    transaction_date,
+    transaction_id,
+    charge_id,
+    transaction_type,
+    transaction_amount,
+    transaction_fee,
+    product_name,
+    customer_email,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    merchant
+  from ${ref('int_stripe_trans')}
 ),
 
--- Stripe ch_ & py_ transactions are mostly orders,
--- but ch_ doesn't have product_name (py_ does), so
--- we get it from Stripe Charges if product name is
--- null in trans_ch, try in int_stripe_charge_product
-stripe_trans_ch_prod as (
+-- Paypal transactions
+paypal_merchant as (
   select
     transaction_date,
     transaction_id,
-    transaction_type,
-    amount,
-    fee,
     charge_id,
-    coalesce(t2.product_name,t1.product_name) as product_name,
-    description
-  from stripe_trans_ch                                  t1
-  left join ${ref('int_stripe_charge_product')}  t2
-  using (charge_id)
-),
-
--- Stripe transactions that DONT contain ch_
-stripe_trans_not_ch as (
-  select *,product_name as description
-  from ${ref('stg_stripe_balance_transaction')}
-  where not regexp_contains(ifnull(charge_id,""),r"(?i)ch_")
-),
-
--- Recombine Stripe ch_ transactions that have added
--- product name with the rest of the transactions
-stripe_trans_all as (
-  select * from stripe_trans_ch_prod
-  union all
-  select * from stripe_trans_not_ch
-),
-
--- Add stripe merchant column
-stripe_merchant as (
-    select
-        *,
-        'stripe' as merchant
-    from stripe_trans_all
-),
-
--- Add Stripe customer email from chargeid_email
-stripe_add_emails as (
-  select 
-    t1.transaction_date,
-    t1.transaction_id ,
-    t2.charge_id as charge_id,
-    t1.transaction_type ,
-    t1.amount as transaction_amount,
-    t1.fee as transaction_fee,
+    transaction_type,
+    transaction_amount,
+    cast(null as numeric) as transaction_fee,
     product_name,
-    description,
-    t1.charge_id as balance_trans_table_charge_id,
-    t2.email as customer_email,
-    t1.merchant
-  from stripe_merchant                         t1
-  left join  ${ref('int_chargeid_email')}      t2
-  on t1.charge_id = t2.charge_id
-),
-
--- Add Stripe UTMs from Checkout Champ
-stripe_add_utms as (
-  select 
-    t1.transaction_date,
-    t1.transaction_id,
-    t1.charge_id,
-    t1.transaction_type,
-    t1.transaction_amount,
-    t1.transaction_fee,
-    t1.product_name,
-    t1.customer_email,
-    t2.utm_source,
-    t2.utm_medium,
-    t2.utm_campaign,
+    customer_email,
+    utm_source,
+    utm_medium,
+    utm_campaign,
     merchant
-  from  stripe_add_emails                        t1
-  left join  ${ref('int_checkoutchamp_source')}  t2
-  on t1.balance_trans_table_charge_id = t2.charge_id
-),
-
--- Paypal merchant transactions
-paypal_merchant as (
-    select
-        transaction_date,
-        transaction_id,
-        charge_id,
-        transaction_type,
-        transaction_amount,
-        cast(null as numeric) as transaction_fee,
-        product_name,
-        customer_email,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        merchant
-    from ${ref('int_paypal_charges')}
+  from ${ref('int_paypal_trans')}
 ),
 
 -- Comine Stripe and Paypal transactions
@@ -124,7 +52,7 @@ merchants_combined as (
     from paypal_merchant
     union all
     select *
-    from stripe_add_utms
+    from stripe_merchant
 ),
 
 -- Categorize transactions by product_name rules

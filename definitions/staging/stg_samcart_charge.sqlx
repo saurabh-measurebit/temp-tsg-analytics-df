@@ -20,4 +20,3 @@ select
     lower(processor_name) as processor_name
 from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
 where test_mode = false
-and lower(processor_name) = 'paypal'

@@ -1,0 +1,66 @@
+------------------------------------------------------------
+-- Combine Samcart tables to gether to associate order,
+-- charges, and UTMs (from customers), together
+------------------------------------------------------------
+
+config { type: "view" }
+
+with
+
+-- Samcart charges
+sc_charges as (
+    select
+        charge_date as transaction_date,
+        transaction_id,
+        charge_id,
+        charge_type as transaction_type,
+        charge_amount as transaction_amount,
+        sam_customer_id,
+        processor_name as merchant
+    from ${ref('stg_samcart_charge')}
+),
+
+-- Samcart orders
+sc_orders as (
+    select
+        transaction_id,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        product_name
+    from ${ref('stg_samcart_order')}
+),
+
+-- Samcart customers
+sc_customers as (
+    select
+        sam_customer_id,
+        email as customer_email
+    from ${ref('stg_samcart_customer')}  
+),
+
+-- Get Samcart source and email 
+sc_joined as (
+    select
+        transaction_date,
+        cast(transaction_id as string) as transaction_id,	
+        charge_id,
+        transaction_type,
+        case
+            when transaction_type = 'refund' and transaction_amount > 0 then transaction_amount
+            else transaction_amount
+        end as transaction_amount,
+        product_name,
+        customer_email,
+        merchant,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        'samcart' as cart
+    from sc_charges
+    left join sc_orders using(transaction_id)
+    left join sc_customers using(sam_customer_id)
+)
+
+select *
+from sc_joined
