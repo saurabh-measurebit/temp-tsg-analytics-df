@@ -24,7 +24,11 @@ stripe_merchant as (
     utm_source,
     utm_medium,
     utm_campaign,
-    merchant
+    merchant,
+    account,
+    charge_date_dttm_ET,
+    order_date_dt_ET,
+    order_date_dttm_ET
   from ${ref('int_stripe_trans')}
 ),
 
@@ -42,7 +46,11 @@ paypal_merchant as (
     utm_source,
     utm_medium,
     utm_campaign,
-    merchant
+    merchant,
+    account,
+    charge_date_dttm_ET,
+    order_date_dt_ET,
+    order_date_dttm_ET
   from ${ref('int_paypal_trans')}
 ),
 
@@ -88,7 +96,11 @@ categorized as (
     utm_source,
     utm_medium,
     utm_campaign,
-    merchant
+    merchant,
+    account,
+    charge_date_dttm_ET,
+    order_date_dt_ET,
+    order_date_dttm_ET
   from merchants_combined
 ),
 

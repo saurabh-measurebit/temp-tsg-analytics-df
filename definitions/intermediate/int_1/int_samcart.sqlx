@@ -16,7 +16,9 @@ sc_charges as (
         charge_type as transaction_type,
         charge_amount as transaction_amount,
         sam_customer_id,
-        processor_name as merchant
+        processor_name as merchant,
+        charge_date_dttm_ET,
+        samcart_account
     from ${ref('stg_samcart_charge')}
 ),
 
@@ -27,7 +29,10 @@ sc_orders as (
         utm_source,
         utm_medium,
         utm_campaign,
-        product_name
+        product_name, 
+        order_date_dt_ET,
+        order_date_dttm_ET,
+        samcart_account
     from ${ref('stg_samcart_order')}
 ),
 
@@ -35,7 +40,8 @@ sc_orders as (
 sc_customers as (
     select
         sam_customer_id,
-        email as customer_email
+        email as customer_email,
+        samcart_account
     from ${ref('stg_samcart_customer')}  
 ),
 
@@ -56,10 +62,14 @@ sc_joined as (
         utm_source,
         utm_medium,
         utm_campaign,
-        'samcart' as cart
-    from sc_charges
-    left join sc_orders using(transaction_id)
-    left join sc_customers using(sam_customer_id)
+        'samcart' as cart,
+        c.samcart_account,
+        charge_date_dttm_ET,
+        order_date_dt_ET,
+        order_date_dttm_ET
+    from sc_charges c
+    left join sc_orders using(transaction_id, samcart_account)
+    left join sc_customers using(sam_customer_id, samcart_account)
 )
 
 select *

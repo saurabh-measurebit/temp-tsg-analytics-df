@@ -4,19 +4,60 @@
 
 config { type: "view" }
 
-select
-    date(datetime(created_at, "America/New_York")) as charge_date,
-    customer_id as sam_customer_id,
-    order_id as transaction_id,
-    processor_transaction_id as charge_id,
-    case
-        when charge_refund_status = 'refunded' then 'refund'
-        else 'charge'
-    end as charge_type,
-    case
-        when charge_refund_status = 'refunded' then - total / 100
-        else total / 100
-    end as charge_amount,
-    lower(processor_name) as processor_name
-from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
-where test_mode = false
+with
+
+-- TSG samcart
+samcart_tsg as (
+    select
+        date(datetime(created_at, "America/New_York")) as charge_date,
+        datetime(created_at, "America/New_York") as charge_date_dttm_ET,
+        customer_id as sam_customer_id,
+        order_id as transaction_id,
+        processor_transaction_id as charge_id,
+        case
+            when charge_refund_status = 'refunded' then 'refund'
+            else 'charge'
+        end as charge_type,
+        case
+            when charge_refund_status = 'refunded' then - total / 100
+            else total / 100
+        end as charge_amount,
+        lower(processor_name) as processor_name, 
+        'tsg' as samcart_account
+    from `tsg-transaction-data.samcart_export.samcart_charges_8589937073`
+    where test_mode = false
+), 
+
+-- SCG samcart
+samcart_scg as (
+    select
+        date(datetime(created_at, "America/New_York")) as charge_date,
+        datetime(created_at, "America/New_York") as charge_date_dttm_ET,
+        customer_id as sam_customer_id,
+        order_id as transaction_id,
+        processor_transaction_id as charge_id,
+        case
+            when charge_refund_status = 'refunded' then 'refund'
+            else 'charge'
+        end as charge_type,
+        case
+            when charge_refund_status = 'refunded' then - total / 100
+            else total / 100
+        end as charge_amount,
+        lower(processor_name) as processor_name,
+        'scg' as samcart_account
+    from `tsg-transaction-data.samcart_scg_export.charges`
+    where test_mode = false
+), 
+
+-- combine samcart data
+samcart as (
+    select *
+    from samcart_tsg
+    union all
+    select *
+    from samcart_scg
+)
+
+select *
+from samcart

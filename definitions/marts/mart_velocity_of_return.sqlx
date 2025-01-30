@@ -26,7 +26,11 @@ transactions as  (
     utm_source,
     min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
     if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null)
-      or (transaction_date is null)), 0, date_diff(transaction_date, min(transaction_date) over (partition by lower(ifnull(customer_email,""))), day)) as days_in_system
+      or (transaction_date is null)), 0, date_diff(transaction_date, min(transaction_date) over (partition by lower(ifnull(customer_email,""))), day)) as days_in_system,
+     account--,
+    -- charge_date_dttm_ET,
+    -- order_date_dt_ET,
+    -- order_date_dttm_ET  
   from ${ref('int_master_transaction')}
   where regexp_contains(ifnull(transaction_type,""),r"(?i)charge")
 ),
@@ -65,7 +69,11 @@ vor_rank_days as (
       when (days_in_system >= 0 and days_in_system <= 120) then "day 120"
       when (days_in_system >= 0 and days_in_system <= 365) then "day 365"
       when (                        days_in_system >  365) then "day 365+"  
-    end as days
+    end as days,
+     account--,
+    -- charge_date_dttm_ET,
+    -- order_date_dt_ET,
+    -- order_date_dttm_ET  
   from transactions
 ),
 
@@ -73,7 +81,8 @@ vor_rank_days as (
 vor_daysums  as  (
   select
     customer_email,
-    customer_min_transDate,
+    customer_min_transDate, 
+     account,
     sum(if((days_in_system                          =   0), transaction_amount, 0)) as day0_sum,
     sum(if((days_in_system >= 0 and days_in_system <=   7), transaction_amount, 0)) as day7_sum,
     sum(if((days_in_system >= 0 and days_in_system <=  14), transaction_amount, 0)) as day14_sum,
@@ -86,7 +95,8 @@ vor_daysums  as  (
   from  transactions
   group by
     customer_email,
-    customer_min_transDate
+    customer_min_transDate,
+     account--,
 ),
 
 -- Velocity of return table
@@ -114,10 +124,12 @@ vor as (
     day90_sum,
     day120_sum,
     day365_sum,
-    day365Beyond_sum
+    day365Beyond_sum,
+    t1.account
   from      vor_rank_days        t1
   left join vor_daysums          t2
   on t1.customer_email = t2.customer_email
+    and t1.account =  t2.account
   order by 1, 2
 )
 

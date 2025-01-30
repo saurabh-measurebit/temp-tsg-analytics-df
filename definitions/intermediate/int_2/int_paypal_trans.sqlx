@@ -56,13 +56,23 @@ sc as (
         utm_source,
         utm_medium,
         utm_campaign,
-        cart
+        cart, 
+        samcart_account,
+        charge_date_dttm_ET,
+        order_date_dt_ET,
+        order_date_dttm_ET
+        
     from ${ref('int_samcart')} 
     where merchant = 'paypal'
 ),
 
 unioned as (
-    select * from cc_joined
+    select *, 
+        'TSG?BOTH?' account,
+        null charge_date_dttm_ET, --probably we'll need to populat this and below fields
+        null order_date_dt_ET,
+        null order_date_dttm_ET
+     from cc_joined
     union all
     select * from sc
 )

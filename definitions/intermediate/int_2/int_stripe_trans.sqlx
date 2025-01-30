@@ -110,7 +110,11 @@ stripe_add_utms_combined as (
     coalesce(t1.utm_source, t2.utm_source)     as utm_source,
     coalesce(t1.utm_medium, t2.utm_medium)     as utm_medium,
     coalesce(t1.utm_campaign, t2.utm_campaign) as utm_campaign,
-    t1.merchant
+    t1.merchant,
+    coalesce(t2.samcart_account, 'TSG?BOTH?' ) account,
+    t2.charge_date_dttm_ET,--probably we'll need a COALESCE also in this and below fields
+    t2.order_date_dt_ET,
+    t2.order_date_dttm_ET
   from  stripe_add_utms_cc                       t1
   left join  ${ref('int_samcart')}               t2
   using (charge_id)

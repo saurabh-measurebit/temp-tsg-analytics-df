@@ -7,5 +7,15 @@ config { type: "view" }
 select
     id as sam_customer_id,
     email,
-    created_at as create_date
+    created_at as create_date, 
+    'tsg' as samcart_account 
 from `tsg-transaction-data.samcart_export.samcart_customers_8589937073` 
+
+UNION ALL
+
+select 
+    id as sam_customer_id,
+    email,
+    created_at as create_date, 
+    'scg' as samcart_account 
+from `tsg-transaction-data.samcart_scg_export.customers`
