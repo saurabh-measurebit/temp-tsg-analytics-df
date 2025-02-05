@@ -19,7 +19,7 @@ transactions as  (
     transaction_id,
     transaction_type,
     transaction_amount,
-    Transaction_fee,
+    transaction_fee,
     product_name,
     product_category,
     lower(ifnull(customer_email, "")) as customer_email,
@@ -27,10 +27,7 @@ transactions as  (
     min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) as customer_min_transDate,
     if(((min(transaction_date) over (partition by lower(ifnull(customer_email,"")) ) is null)
       or (transaction_date is null)), 0, date_diff(transaction_date, min(transaction_date) over (partition by lower(ifnull(customer_email,""))), day)) as days_in_system,
-     account--,
-    -- charge_date_dttm_ET,
-    -- order_date_dt_ET,
-    -- order_date_dttm_ET  
+     account
   from ${ref('int_master_transaction')}
   where regexp_contains(ifnull(transaction_type,""),r"(?i)charge")
 ),
@@ -70,10 +67,7 @@ vor_rank_days as (
       when (days_in_system >= 0 and days_in_system <= 365) then "day 365"
       when (                        days_in_system >  365) then "day 365+"  
     end as days,
-     account--,
-    -- charge_date_dttm_ET,
-    -- order_date_dt_ET,
-    -- order_date_dttm_ET  
+     account
   from transactions
 ),
 
@@ -82,7 +76,7 @@ vor_daysums  as  (
   select
     customer_email,
     customer_min_transDate, 
-     account,
+    account,
     sum(if((days_in_system                          =   0), transaction_amount, 0)) as day0_sum,
     sum(if((days_in_system >= 0 and days_in_system <=   7), transaction_amount, 0)) as day7_sum,
     sum(if((days_in_system >= 0 and days_in_system <=  14), transaction_amount, 0)) as day14_sum,

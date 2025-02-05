@@ -18,7 +18,7 @@ transactions as (
     transaction_id,
     transaction_type,
     transaction_amount,
-    Transaction_fee,
+    transaction_fee,
     product_name,
     product_category,
     lower(ifnull(customer_email,"")) as customer_email,
