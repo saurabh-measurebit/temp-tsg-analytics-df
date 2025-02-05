@@ -93,6 +93,8 @@ stripe_add_utms_cc as (
     t2.utm_source,
     t2.utm_medium,
     t2.utm_campaign,
+    t2.utm_content,
+    t2.utm_term,
     t1.merchant
   from  stripe_add_emails                        t1
   left join  ${ref('int_checkoutchamp_source')}  t2
@@ -114,6 +116,8 @@ stripe_add_utms_combined as (
     coalesce(t1.utm_source, t2.utm_source)     as utm_source,
     coalesce(t1.utm_medium, t2.utm_medium)     as utm_medium,
     coalesce(t1.utm_campaign, t2.utm_campaign) as utm_campaign,
+    coalesce(t1.utm_medium, t2.utm_content)     as utm_content,
+    coalesce(t1.utm_campaign, t2.utm_term) as utm_term,
     t1.merchant,
     coalesce(t2.samcart_account, 'checkout champ tsg' ) account
   from  stripe_add_utms_cc           t1

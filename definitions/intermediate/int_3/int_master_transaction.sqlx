@@ -25,6 +25,8 @@ stripe_merchant as (
     utm_source,
     utm_medium,
     utm_campaign,
+    utm_content,
+    utm_term,
     merchant,
     account
   from ${ref('int_stripe_trans')}
@@ -45,6 +47,8 @@ paypal_merchant as (
     utm_source,
     utm_medium,
     utm_campaign,
+    utm_content,
+    utm_term,
     merchant,
     account
   from ${ref('int_paypal_trans')}
@@ -93,6 +97,8 @@ categorized as (
     utm_source,
     utm_medium,
     utm_campaign,
+    utm_content,
+    utm_term,
     merchant,
     account
   from merchants_combined

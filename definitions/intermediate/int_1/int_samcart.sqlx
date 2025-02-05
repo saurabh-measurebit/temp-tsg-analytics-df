@@ -29,6 +29,8 @@ sc_orders as (
         utm_source,
         utm_medium,
         utm_campaign,
+        utm_content,
+        utm_term,
         product_name, 
         order_date,
         samcart_account
@@ -62,6 +64,8 @@ sc_joined as (
         utm_source,
         utm_medium,
         utm_campaign,
+        utm_content,
+        utm_term,
         'samcart' as cart,
         t1.samcart_account
     from sc_charges                                                t1

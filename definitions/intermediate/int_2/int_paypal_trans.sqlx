@@ -29,7 +29,9 @@ cc_orders as (
         client_order_id,
         utm_source,
         utm_medium,
-        utm_campaign
+        utm_campaign,
+        utm_content,
+        utm_term
     from ${ref('stg_checkoutchamp_orders')}
 ),
 
@@ -58,6 +60,8 @@ sc as (
         utm_source,
         utm_medium,
         utm_campaign,
+        utm_content,
+        utm_term,
         cart, 
         samcart_account
     from ${ref('int_samcart')} 
