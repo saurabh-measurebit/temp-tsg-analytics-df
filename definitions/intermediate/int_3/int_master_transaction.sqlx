@@ -14,6 +14,7 @@ with
 stripe_merchant as (
   select 
     transaction_date,
+    transaction_dt,
     transaction_id,
     charge_id,
     transaction_type,
@@ -25,10 +26,7 @@ stripe_merchant as (
     utm_medium,
     utm_campaign,
     merchant,
-    account,
-    charge_date_dttm_ET,
-    order_date_dt_ET,
-    order_date_dttm_ET
+    account
   from ${ref('int_stripe_trans')}
 ),
 
@@ -36,6 +34,7 @@ stripe_merchant as (
 paypal_merchant as (
   select
     transaction_date,
+    transaction_dt,
     transaction_id,
     charge_id,
     transaction_type,
@@ -47,10 +46,7 @@ paypal_merchant as (
     utm_medium,
     utm_campaign,
     merchant,
-    account,
-    charge_date_dttm_ET,
-    order_date_dt_ET,
-    order_date_dttm_ET
+    account
   from ${ref('int_paypal_trans')}
 ),
 
@@ -67,6 +63,7 @@ merchants_combined as (
 categorized as (
   select
     transaction_date,
+    transaction_dt,
     transaction_id,
     charge_id,
     transaction_type,
@@ -97,10 +94,7 @@ categorized as (
     utm_medium,
     utm_campaign,
     merchant,
-    account,
-    charge_date_dttm_ET,
-    order_date_dt_ET,
-    order_date_dttm_ET
+    account
   from merchants_combined
 ),
 

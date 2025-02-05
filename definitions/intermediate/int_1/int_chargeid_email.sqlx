@@ -13,8 +13,8 @@ config { type: "view" }
 select
     charge_id,
     email, 
-    c.samcart_account account
-from ${ref('stg_samcart_charge')} c
+    t1.samcart_account account
+from ${ref('stg_samcart_charge')}         t1
 left join ${ref('stg_samcart_customer')}
 using (sam_customer_id, samcart_account)
 where charge_id like 'py_%' 
@@ -23,8 +23,8 @@ union all
 
 select 
     charge_id,
-    email
-    , 'TSG?BOTH?Stripe?' account
+    email,
+    'TSG?BOTH?Stripe?' as account
 from ${ref('stg_stripe_charge')}  
 left join  ${ref('stg_stripe_customer')}
 using (stripe_customer_id)

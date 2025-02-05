@@ -6,6 +6,7 @@ config { type: "view" }
 
 select
   date(datetime(created, "America/New_York"))  as transaction_date,
+  datetime(created, "America/New_York") as transaction_dt,
   id as transaction_id,
   reporting_category as transaction_type,
   (amount/100) as amount,

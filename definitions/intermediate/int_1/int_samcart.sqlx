@@ -11,13 +11,13 @@ with
 sc_charges as (
     select
         charge_date as transaction_date,
+        charge_dt as transaction_dt,
         transaction_id,
         charge_id,
         charge_type as transaction_type,
         charge_amount as transaction_amount,
         sam_customer_id,
         processor_name as merchant,
-        charge_date_dttm_ET,
         samcart_account
     from ${ref('stg_samcart_charge')}
 ),
@@ -30,8 +30,7 @@ sc_orders as (
         utm_medium,
         utm_campaign,
         product_name, 
-        order_date_dt_ET,
-        order_date_dttm_ET,
+        order_date,
         samcart_account
     from ${ref('stg_samcart_order')}
 ),
@@ -49,6 +48,7 @@ sc_customers as (
 sc_joined as (
     select
         transaction_date,
+        transaction_dt,
         cast(transaction_id as string) as transaction_id,	
         charge_id,
         transaction_type,
@@ -63,11 +63,8 @@ sc_joined as (
         utm_medium,
         utm_campaign,
         'samcart' as cart,
-        c.samcart_account,
-        charge_date_dttm_ET,
-        order_date_dt_ET,
-        order_date_dttm_ET
-    from sc_charges c
+        t1.samcart_account
+    from sc_charges                                                t1
     left join sc_orders using(transaction_id, samcart_account)
     left join sc_customers using(sam_customer_id, samcart_account)
 )

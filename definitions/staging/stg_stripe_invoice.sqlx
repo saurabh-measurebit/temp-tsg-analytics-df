@@ -6,6 +6,7 @@ config { type: "view" }
 
 select
     created as invoice_date,
+    datetime(created, "America/New_York") as invoice_dt,
     id as invoice_id,
     json_extract_scalar(lines, '$.data[0].plan.name') as product_name,
     charge as charge_id
