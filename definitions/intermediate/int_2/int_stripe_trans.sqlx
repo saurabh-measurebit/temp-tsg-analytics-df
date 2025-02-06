@@ -23,7 +23,7 @@ stripe_trans_ch_prod as (
   select
     transaction_date,
     transaction_dt,
-    transaction_id,
+    t1.transaction_id,
     transaction_type,
     amount,
     fee,
