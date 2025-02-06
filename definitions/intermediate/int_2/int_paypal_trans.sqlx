@@ -15,7 +15,6 @@ cc_transactions as (
         charge_id,
         transaction_type,
         transaction_amount,
-        -- transaction_fee,
         product_name,
         customer_email,
         'paypal' as merchant
@@ -26,7 +25,7 @@ cc_transactions as (
 -- Checkout Champ orders
 cc_orders as (
     select
-        client_order_id,
+        transaction_id,
         utm_source,
         utm_medium,
         utm_campaign,
@@ -38,11 +37,25 @@ cc_orders as (
 -- Get Checkout Champ source
 cc_joined as (
     select
-        * except(client_order_id),
-        'checkout champ' as cart
+        transaction_date,
+        transaction_dt,
+        transaction_id,
+        charge_id,
+        transaction_type,
+        transaction_amount,
+        product_name,
+        customer_email,
+        merchant,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        utm_content,
+        utm_term,
+        'checkout champ' as cart,
+        '' as samcart_account
     from cc_transactions    t1
     left join cc_orders     t2
-    on t1.transaction_id = t2.client_order_id
+    using(transaction_id)
 ),
 
 -- Samcart paypal charges
@@ -69,13 +82,20 @@ sc as (
 ),
 
 unioned as (
-    select
-        *, 
-        'checkout champ tsg' as account
-    from cc_joined
+    select * from cc_joined
     union all
     select * from sc
 )
 
 select *
 from unioned
+
+-- select
+--     round(sum(transaction_amount)) as revenue,
+--     count(*) as purchases
+-- from unioned
+-- where
+--     transaction_type = 'charge'
+--     and merchant = 'paypal'
+--     and cart = 'samcart'
+--     and transaction_date between '2025-01-01' and '2025-01-31'

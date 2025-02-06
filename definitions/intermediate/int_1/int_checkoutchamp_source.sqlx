@@ -10,21 +10,37 @@ with
 -- Stripe charges
 stg_stripe_charges as   (
     select 
-        client_order_id,
+        transaction_id,
         charge_id 
     from ${ref('stg_stripe_charge')}  
-    where client_order_id is not null
-)
+    where transaction_id is not null
+),
 
 -- utm source from Checkout Champ
-select 
-    charge_id,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    utm_content,
-    utm_term
-from stg_stripe_charges
-left join ${ref('stg_checkoutchamp_orders')}    
-using (client_order_id)
+joined as (
+    select 
+        order_date,
+        order_amount,
+        charge_id,
+        transaction_id,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        utm_content,
+        utm_term,
+        case when t1.transaction_id = t2.transaction_id then 'checkout champ' end as cart
+    from stg_stripe_charges                       t1
+    left join ${ref('stg_checkoutchamp_orders')}  t2  
+    using (transaction_id)
+)
 
+select *
+from joined
+
+
+-- select
+--     sum(order_amount) as revenue,
+--     count(*) as purchases
+-- from joined
+-- where cart = 'checkout champ'
+--     and order_date between '2025-01-15' and '2025-01-31'

@@ -16,5 +16,5 @@ select
   description, -- "Order #" comes from Membermouse
   metadata,
   json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
-  json_extract_scalar(json_query(metadata, '$.clientOrderId')) as client_order_id
+  json_extract_scalar(json_query(metadata, '$.clientOrderId')) as transaction_id,  -- client_order_id comes from checkout champ
 from `tsg-transaction-data.stripe_export.stripe_charges_8589937017`

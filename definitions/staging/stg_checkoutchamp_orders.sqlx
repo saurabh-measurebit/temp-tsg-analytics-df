@@ -7,7 +7,9 @@
 config { type: "view" }
 
 select
-    clientOrderId as client_order_id,
+    date(dateCreated) as order_date,
+    cast(totalAmount as float64) as order_amount,
+    clientOrderId as transaction_id,
     UTMSource as utm_source,
     UTMMedium as utm_medium,
     UTMCampaign as utm_campaign,

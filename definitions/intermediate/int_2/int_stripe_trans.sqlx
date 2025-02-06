@@ -28,7 +28,7 @@ stripe_trans_ch_prod as (
     amount,
     fee,
     charge_id,
-    coalesce(t2.product_name,t1.product_name) as product_name,
+    coalesce(t2.product_name, t1.product_name) as product_name,
     description
   from stripe_trans_ch                           t1
   left join ${ref('int_stripe_charge_product')}  t2
@@ -78,7 +78,7 @@ stripe_add_emails as (
   on t1.charge_id = t2.charge_id
 ),
 
--- Add UTMs from Checkout Champ
+-- Add UTMs and cart from Checkout Champ
 stripe_add_utms_cc as (
   select 
     t1.transaction_date,
@@ -95,7 +95,9 @@ stripe_add_utms_cc as (
     t2.utm_campaign,
     t2.utm_content,
     t2.utm_term,
-    t1.merchant
+    t1.merchant,
+    t2.cart,
+    '' as samcart_account
   from  stripe_add_emails                        t1
   left join  ${ref('int_checkoutchamp_source')}  t2
   on t1.balance_trans_table_charge_id = t2.charge_id
@@ -113,13 +115,14 @@ stripe_add_utms_combined as (
     t1.transaction_fee,
     t1.product_name,
     t1.customer_email,
-    coalesce(t1.utm_source, t2.utm_source)     as utm_source,
-    coalesce(t1.utm_medium, t2.utm_medium)     as utm_medium,
+    coalesce(t1.utm_source, t2.utm_source) as utm_source,
+    coalesce(t1.utm_medium, t2.utm_medium) as utm_medium,
     coalesce(t1.utm_campaign, t2.utm_campaign) as utm_campaign,
-    coalesce(t1.utm_medium, t2.utm_content)     as utm_content,
+    coalesce(t1.utm_medium, t2.utm_content) as utm_content,
     coalesce(t1.utm_campaign, t2.utm_term) as utm_term,
     t1.merchant,
-    coalesce(t2.samcart_account, 'checkout champ tsg' ) account
+    coalesce(case when t2.cart = 'samcart' then 'samcart' end, t1.cart, 'unknown') as cart,
+    coalesce(t2.samcart_account, '' ) as samcart_account
   from  stripe_add_utms_cc           t1
   left join  ${ref('int_samcart')}   t2
   using (charge_id)
@@ -128,3 +131,13 @@ stripe_add_utms_combined as (
 select *
 from stripe_add_utms_combined
 order by transaction_date
+
+-- select
+--   round(sum(transaction_amount)) as revenue,
+--   count(*) as purchases
+-- from stripe_add_utms_combined
+-- where
+--     transaction_type = 'charge'
+--     and merchant = 'stripe'
+--     and cart = 'checkout champ'
+--     and transaction_date between '2025-01-01' and '2025-01-31'

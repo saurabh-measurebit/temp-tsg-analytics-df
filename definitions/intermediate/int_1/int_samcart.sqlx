@@ -32,8 +32,7 @@ sc_orders as (
         utm_content,
         utm_term,
         product_name, 
-        order_date,
-        samcart_account
+        order_date
     from ${ref('stg_samcart_order')}
 ),
 
@@ -41,8 +40,7 @@ sc_orders as (
 sc_customers as (
     select
         sam_customer_id,
-        email as customer_email,
-        samcart_account
+        email as customer_email
     from ${ref('stg_samcart_customer')}  
 ),
 
@@ -67,11 +65,20 @@ sc_joined as (
         utm_content,
         utm_term,
         'samcart' as cart,
-        t1.samcart_account
-    from sc_charges                                                t1
-    left join sc_orders using(transaction_id, samcart_account)
-    left join sc_customers using(sam_customer_id, samcart_account)
+        samcart_account
+    from sc_charges                               t1
+    left join sc_orders using(transaction_id)
+    left join sc_customers using(sam_customer_id)
 )
 
 select *
 from sc_joined
+
+-- select
+--     sum(transaction_amount) as revenue,
+--     count(*) as purchases
+-- from sc_joined
+-- where
+--     transaction_type = 'charge'
+--     -- and merchant = 'stripe'
+--     and transaction_date between '2025-01-01' and '2025-01-31'

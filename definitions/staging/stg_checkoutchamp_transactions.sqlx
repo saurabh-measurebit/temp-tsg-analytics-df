@@ -9,9 +9,9 @@ select
     datetime(dateCreated, "America/New_York") as transaction_dt,
     clientOrderId as transaction_id,
     case
-    when txnType = 'SALE' then 'charge'
-    when txnType = 'REFUND' then 'refund'
-    when txnType = 'VOID' then 'void'
+        when txnType = 'SALE' then 'charge'
+        when txnType = 'REFUND' then 'refund'
+        when txnType = 'VOID' then 'void'
     end as transaction_type,
     case
         when txnType = 'REFUND' then -cast(totalAmount as numeric)
