@@ -13,7 +13,7 @@ with
 charges as (
   select
     charge_id,
-    client_order_id,  -- client_order_id comes from checkout champ
+    transaction_id,  -- client_order_id comes from checkout champ
     description,
     case
       when lower(description) like 'payment for order# %' then 'All Access Membership'
@@ -33,7 +33,7 @@ stripe_subscription as (
   select
     charge_date,
     charge_id,
-    client_order_id,  -- client_order_id comes from checkout champ
+    transaction_id,  -- client_order_id comes from checkout champ
     invoice_id,
     description
   from ${ref('stg_stripe_charge')}
@@ -57,7 +57,7 @@ invoices as (
   select
     charge_date,
     charge_id,
-    client_order_id,
+    transaction_id,
     invoice_date,
     t1.invoice_id,
     product_name,
@@ -70,14 +70,14 @@ invoices as (
 -- Recombine charges with subscriptions that have product_name
 select
   charge_id,
-  client_order_id,
+  transaction_id,
   product_name,
   description
 from charges
 union all
 select
   charge_id,
-  client_order_id,
+  transaction_id,
   product_name,
   description
 from invoices
