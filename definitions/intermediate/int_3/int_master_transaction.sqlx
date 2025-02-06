@@ -27,6 +27,7 @@ stripe_merchant as (
     utm_campaign,
     utm_content,
     utm_term,
+    cart,
     merchant,
     samcart_account
   from ${ref('int_stripe_trans')}
@@ -49,6 +50,7 @@ paypal_merchant as (
     utm_campaign,
     utm_content,
     utm_term,
+    cart,
     merchant,
     samcart_account
   from ${ref('int_paypal_trans')}
@@ -99,6 +101,7 @@ categorized as (
     utm_campaign,
     utm_content,
     utm_term,
+    cart,
     merchant,
     samcart_account
   from merchants_combined
