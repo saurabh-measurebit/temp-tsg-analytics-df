@@ -11,3 +11,13 @@ select
     json_extract_scalar(lines, '$.data[0].plan.name') as product_name,
     charge as charge_id
 from `tsg-transaction-data.stripe_export.stripe_invoices_8589937017`
+
+union all
+
+select
+    created as invoice_date,
+    datetime(created, "America/New_York") as invoice_dt,
+    id as invoice_id,
+    json_extract_scalar(lines, '$.data[0].plan.name') as product_name,
+    charge as charge_id
+from `tsg-transaction-data.stripe_scg_export.invoices`

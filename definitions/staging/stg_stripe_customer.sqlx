@@ -8,3 +8,10 @@ select
     id as stripe_customer_id,
     email as email
 from `tsg-transaction-data.stripe_export.stripe_customers_8589937017`
+
+union all
+
+select
+    id as stripe_customer_id,
+    email as email
+from `tsg-transaction-data.stripe_scg_export.customers`

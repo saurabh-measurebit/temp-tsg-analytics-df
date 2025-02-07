@@ -15,3 +15,17 @@ select
   description as product_name
 from
   `tsg-transaction-data.stripe_export.stripe_balance_transactions_8589937017`
+
+union all
+
+select
+  date(datetime(created, "America/New_York"))  as transaction_date,
+  datetime(created, "America/New_York") as transaction_dt,
+  id as transaction_id,
+  reporting_category as transaction_type,
+  (amount/100) as amount,
+  (fee/100) as fee,
+  source as charge_id,
+  description as product_name
+from
+  `tsg-transaction-data.stripe_scg_export.balance_transactions`
