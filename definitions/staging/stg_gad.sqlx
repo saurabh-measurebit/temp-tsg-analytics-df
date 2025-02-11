@@ -1,0 +1,10 @@
+-------------------------------------------
+-- Google ads - mapping campaign name to id
+-------------------------------------------
+
+config { type: "view" }
+
+select distinct
+    cast(campaign_id as string) as campaign_id,
+    campaign_name
+from `eng-particle-420006.airbyte.GAD_campaign`
