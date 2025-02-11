@@ -126,43 +126,10 @@ stripe_add_utms_combined as (
   from  stripe_add_utms_cc           t1
   left join  ${ref('int_samcart')}   t2
   using (charge_id)
-),
-
--- Google ads utm_campaign contains campaign id.Campaign name corrected.
-gad_campaign_corrected as (
-  select
-    transaction_date,
-    transaction_dt,
-    transaction_id,
-    charge_id,
-    transaction_type,
-    transaction_amount,
-    transaction_fee,
-    product_name,
-    customer_email,
-    utm_source,
-    utm_medium,
-    coalesce(t2.campaign_name, t1.utm_campaign) as utm_campaign,
-    utm_content,
-    utm_term,
-    merchant,
-    cart,
-    samcart_account
-  from stripe_add_utms_combined      t1
-  left join ${ref('stg_gad')}        t2
-  on t1.utm_campaign = t2.campaign_id
-  where utm_source = 'google'
-
-  union all
-
-  select *
-  from stripe_add_utms_combined
-  where utm_source != 'google'
 )
 
-
 select *
-from gad_campaign_corrected
+from stripe_add_utms_combined
 order by transaction_date
 
 

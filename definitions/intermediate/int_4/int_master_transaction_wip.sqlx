@@ -1,0 +1,50 @@
+---------------------------------------------------------
+-- Work in progress. Update Stripe google ads UTMs
+---------------------------------------------------------
+
+config { type: "table" ,
+    bigquery: {
+        partitionBy:  "transaction_date"
+    }
+}
+
+with
+
+-- Google ads utm_campaign contains campaign id.Campaign name corrected.
+gad_campaign_corrected as (
+  select
+    transaction_date,
+    transaction_dt,
+    transaction_id,
+    charge_id,
+    transaction_type,
+    transaction_amount,
+    transaction_fee,
+    product_name,
+    customer_email,
+    product_category,
+    utm_source,
+    utm_medium,
+    coalesce(t2.campaign_name, t1.utm_campaign) as utm_campaign,
+    utm_content,
+    utm_term,
+    merchant,
+    cart,
+    samcart_account
+  from ${ref('int_master_transaction')}   t1
+  left join ${ref('stg_gad')}             t2
+  on t1.utm_campaign = t2.campaign_id
+  where utm_source = 'google'
+
+  union all
+
+  select *
+  from ${ref('int_master_transaction')}
+  where utm_source != 'google'
+)
+
+
+select *
+from gad_campaign_corrected
+
+-- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
