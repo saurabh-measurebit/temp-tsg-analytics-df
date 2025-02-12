@@ -34,13 +34,6 @@ gad_campaign_corrected as (
   from ${ref('int_master_transaction')}   t1
   left join ${ref('stg_gad')}             t2
   on t1.utm_campaign = t2.campaign_id
-  where utm_source = 'google'
-
-  union all
-
-  select *
-  from ${ref('int_master_transaction')}
-  where utm_source != 'google'
 )
 
 
