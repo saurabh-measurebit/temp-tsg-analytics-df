@@ -4,7 +4,16 @@
 
 config { type: "view" }
 
-select distinct
+with prep as (
+select 
     cast(campaign_id as string) as campaign_id,
-    campaign_name
+    campaign_name,
+    segments_date
 from `eng-particle-420006.airbyte.GAD_campaign`
+order by segments_date asc
+)
+
+select distinct
+    campaign_id,
+    campaign_name
+from prep

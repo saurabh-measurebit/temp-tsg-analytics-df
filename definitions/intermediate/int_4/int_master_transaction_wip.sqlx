@@ -12,7 +12,7 @@ with
 
 -- Google ads utm_campaign contains campaign id.Campaign name corrected.
 gad_campaign_corrected as (
-  select
+  select 
     transaction_date,
     transaction_dt,
     transaction_id,
@@ -32,7 +32,10 @@ gad_campaign_corrected as (
     cart,
     samcart_account
   from ${ref('int_master_transaction')}   t1
-  left join ${ref('stg_gad')}             t2
+  left join (
+    select campaign_id, max(campaign_name) campaign_name
+    from ${ref('stg_gad')} 
+  group by campaign_id)                  t2
   on t1.utm_campaign = t2.campaign_id
 )
 
