@@ -1,0 +1,26 @@
+--------------------------------------------------------------------
+-- Query creates buyer-breakdown table.
+-- Contains the same data as the mart_transaction_all_revenue except,
+-- the column names are the same as the original queries. This is 
+-- the purpose of showing the data in the looker dashboard
+--------------------------------------------------------------------
+
+config { type: "table" ,
+    bigquery: {
+        partitionBy:  "transactionDate"
+    }
+}
+
+select
+  transaction_date as transactionDate,
+  transaction_id as transactionID,
+  transaction_type as transactionType,
+  transaction_amount as transactionAmount,
+  transaction_fee as TransactionFee,
+  product_name as cleanProductName,
+  product_category as productCategory,
+  customer_email as customerEmail,
+  utm_source as UTMSource,
+  days as Days
+from ${ref('mart_transaction_buyer_breakdown')}
+

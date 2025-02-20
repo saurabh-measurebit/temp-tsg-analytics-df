@@ -35,7 +35,7 @@ gad_campaign_corrected as (
   left join (
     select campaign_id, max(campaign_name) campaign_name
     from ${ref('stg_gad')} 
-  group by campaign_id)                  t2
+  group by campaign_id)                   t2
   on t1.utm_campaign = t2.campaign_id
 )
 

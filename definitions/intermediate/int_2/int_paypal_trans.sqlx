@@ -14,7 +14,7 @@ cc_transactions as (
         transaction_id,
         charge_id,
         transaction_type,
-        transaction_amount,
+        cast(product_price as numeric) as transaction_amount, -- using product_price rather than original transaction_amount since a transaction can contain one or more products
         product_name,
         customer_email,
         'paypal' as merchant

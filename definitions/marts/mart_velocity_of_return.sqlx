@@ -57,15 +57,15 @@ vor_rank_days as (
     end as rank,
     case
       when customer_min_transDate is null                  then ""
-      when (days_in_system  = 0                          ) then "day 0"
-      when (days_in_system >= 0 and days_in_system <=   7) then "day 7"
-      when (days_in_system >= 0 and days_in_system <=  14) then "day 14"
-      when (days_in_system >= 0 and days_in_system <=  30) then "day 30"
-      when (days_in_system >= 0 and days_in_system <=  60) then "day 60"
-      when (days_in_system >= 0 and days_in_system <=  90) then "day 90"
-      when (days_in_system >= 0 and days_in_system <= 120) then "day 120"
-      when (days_in_system >= 0 and days_in_system <= 365) then "day 365"
-      when (                        days_in_system >  365) then "day 365+"  
+      when (days_in_system  = 0                          ) then "Day 0"
+      when (days_in_system >= 0 and days_in_system <=   7) then "Day 7"
+      when (days_in_system >= 0 and days_in_system <=  14) then "Day 14"
+      when (days_in_system >= 0 and days_in_system <=  30) then "Day 30"
+      when (days_in_system >= 0 and days_in_system <=  60) then "Day 60"
+      when (days_in_system >= 0 and days_in_system <=  90) then "Day 90"
+      when (days_in_system >= 0 and days_in_system <= 120) then "Day 120"
+      when (days_in_system >= 0 and days_in_system <= 365) then "Day 365"
+      when (                        days_in_system >  365) then "Day 365+"  
     end as days,
     samcart_account
   from transactions

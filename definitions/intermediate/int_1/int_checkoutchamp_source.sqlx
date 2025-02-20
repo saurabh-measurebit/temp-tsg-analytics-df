@@ -16,7 +16,7 @@ stg_stripe_charges as   (
     where transaction_id is not null
 ),
 
--- utm source from Checkout Champ
+-- utm source from Checkout Champ orders
 joined as (
     select 
         order_date,

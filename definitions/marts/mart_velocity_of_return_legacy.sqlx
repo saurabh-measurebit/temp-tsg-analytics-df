@@ -1,0 +1,46 @@
+--------------------------------------------------------------------
+-- Query creates velocity-of-return table
+-- Contains the same data as the mart_transaction_all_revenue except,
+-- the column names are the same as the original queries. This is 
+-- the purpose of showing the data in the looker dashboard
+--------------------------------------------------------------------
+
+-- Cohort updates columns (not incremental)
+config { type: "table" ,
+    bigquery: {
+        partitionBy:  "transactionDate"
+    }
+}
+
+
+with
+
+legacy_column_names as (
+  select
+    customer_email as customerEmail,
+    transaction_date as transactionDate,
+    year as Year,
+    month as Month,
+    product_name as cleanProductName, 
+    transaction_amount as transactionAmount,
+    utm_source as UTMSource,
+    product_category as productCategory,
+    customer_min_transDate as customerMinTransDate,
+    rank as `Order`,
+    days_in_system as DaysInSystem,
+    days as Days,
+    day0_sum as Day0_Sum,
+    day7_sum as Day7_Sum,
+    day14_sum as Day14_Sum,
+    day30_sum as Day30_Sum,
+    day60_sum as Day60_Sum,
+    day90_sum as Day90_Sum,
+    day120_sum as Day120_Sum,
+    day365_sum as Day365_Sum,
+    day365Beyond_sum as Day365Beyond_Sum,
+    samcart_account  as samcartAccount
+  from ${ref('mart_velocity_of_return')}
+)
+
+select *
+from legacy_column_names

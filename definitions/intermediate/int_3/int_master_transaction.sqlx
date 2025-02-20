@@ -130,5 +130,6 @@ where
 
 select *
 from remove_tests
+-- where customer_email = 'domalley64@yahoo.com' -- for the purposes of debugging
 
 -- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
