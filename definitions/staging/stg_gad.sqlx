@@ -4,16 +4,31 @@
 
 config { type: "view" }
 
-with prep as (
-select 
-    cast(campaign_id as string) as campaign_id,
-    campaign_name,
-    segments_date
-from `eng-particle-420006.airbyte.GAD_campaign`
-order by segments_date asc
+with
+gad_tsg as (
+    select 
+        cast(campaign_id as string) as campaign_id,
+        campaign_name,
+        segments_date
+    from `eng-particle-420006.airbyte.GAD_campaign`
+    order by segments_date asc
+),
+
+gad_scg as (
+    select 
+        cast(campaign_id as string) as campaign_id,
+        campaign_name,
+        segments_date
+    from `eng-particle-420006.airbyte.GAD_SCG_campaign`
+    order by segments_date asc
 )
 
 select distinct
     campaign_id,
     campaign_name
-from prep
+from gad_tsg
+union distinct
+select distinct
+    campaign_id,
+    campaign_name
+from gad_scg
