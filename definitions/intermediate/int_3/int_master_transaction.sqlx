@@ -114,6 +114,8 @@ from categorized
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)measurebit.com")
+    or regexp_contains(ifnull(customer_email,""),r"(?i)samcart.com")
+    or regexp_contains(ifnull(customer_email,""),r"(?i)testinator.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)topspeedgolf.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)aboundup.com")
@@ -124,6 +126,7 @@ where
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)1 day renewal product 2")
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)fake shippable good")
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)test trial")
+    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)test product")
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)taxjar test")
     or regexp_contains(lower(ifnull(product_name,"")),r"(?i)tsg level 1 instructor test")) )
 )
