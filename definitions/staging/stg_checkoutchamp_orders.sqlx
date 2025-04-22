@@ -16,4 +16,4 @@ select
     UTMContent as utm_content,
     UTMTerm as utm_term
 from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
-where orderStatus not in ('PARTIAL')
+where orderStatus not in ('PARTIAL', 'REFUNDED')
