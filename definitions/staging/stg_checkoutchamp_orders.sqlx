@@ -7,7 +7,7 @@
 config { type: "view" }
 
 select
-    date(datetime(dateCreated, "America/New_York")) as order_date,
+    date(dateCreated) as order_date,
     cast(totalAmount as float64) as order_amount,
     clientOrderId as transaction_id,
     UTMSource as utm_source,
