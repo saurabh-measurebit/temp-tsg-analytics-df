@@ -5,19 +5,20 @@
 config { type: "view" }
 
 select
-    created as invoice_date,
-    datetime(created, "America/New_York") as invoice_dt,
+    date(datetime(TIMESTAMP_SECONDS(created), "America/New_York")) as invoice_date,
+    datetime(TIMESTAMP_SECONDS(created), "America/New_York") as invoice_dt,
     id as invoice_id,
     json_extract_scalar(lines, '$.data[0].plan.name') as product_name,
     charge as charge_id
-from `tsg-transaction-data.stripe_export.stripe_invoices_8589937017`
+from `eng-particle-420006.airbyte.STRIPE_invoices` 
 
 union all
 
 select
-    created as invoice_date,
-    datetime(created, "America/New_York") as invoice_dt,
+
+    date(datetime(TIMESTAMP_SECONDS(created), "America/New_York")) as invoice_date,
+    datetime(TIMESTAMP_SECONDS(created), "America/New_York") as invoice_dt,
     id as invoice_id,
     json_extract_scalar(lines, '$.data[0].plan.name') as product_name,
     cast(null as string) as charge_id
-from `tsg-transaction-data.stripe_scg_export.invoices`
+from `eng-particle-420006.airbyte.STRIPE_SCG_invoices`

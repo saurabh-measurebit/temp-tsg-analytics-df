@@ -5,25 +5,11 @@
 ---------------------------------------------------------
 
 config { type: "view" }
-
 select
-  date(datetime(created, "America/New_York"))  as charge_date,
-  datetime(created, "America/New_York") as charge_dt,
-  customer as stripe_customer_id,
-  id as charge_id,
-  captured as charge_status,
-  invoice as invoice_id,
-  description, -- "Order #" comes from Membermouse
-  metadata,
-  json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
-  json_extract_scalar(json_query(metadata, '$.clientOrderId')) as transaction_id,  -- client_order_id comes from checkout champ
-from `tsg-transaction-data.stripe_export.stripe_charges_8589937017`
-
-union all
-
-select
-  date(datetime(created, "America/New_York"))  as charge_date,
-  datetime(created, "America/New_York") as charge_dt,
+    date(datetime(TIMESTAMP_SECONDS(created), "America/New_York")) charge_date,
+    datetime(TIMESTAMP_SECONDS(created), "America/New_York") as charge_dt,
+  -- date(datetime(created, "America/New_York"))  as charge_date,
+  -- datetime(created, "America/New_York") as charge_dt,
   customer as stripe_customer_id,
   id as charge_id,
   captured as charge_status,
@@ -32,4 +18,21 @@ select
   metadata,
   json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
   json_extract_scalar(json_query(metadata, '$.clientOrderId')) as transaction_id,  -- client_order_id comes from checkout champ
-from `tsg-transaction-data.stripe_scg_export.charges` 
+from `eng-particle-420006.airbyte.STRIPE_charges`
+
+union all
+
+select
+    date(datetime(TIMESTAMP_SECONDS(created), "America/New_York")) charge_date,
+    datetime(TIMESTAMP_SECONDS(created), "America/New_York") as charge_dt,
+  -- date(datetime(created, "America/New_York"))  as charge_date,
+  -- datetime(created, "America/New_York") as charge_dt,
+  customer as stripe_customer_id,
+  id as charge_id,
+  captured as charge_status,
+  cast(null as string) as invoice_id,
+  description, -- "Order #" comes from Membermouse
+  metadata,
+  json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
+  json_extract_scalar(json_query(metadata, '$.clientOrderId')) as transaction_id,  -- client_order_id comes from checkout champ
+from `eng-particle-420006.airbyte.STRIPE_SCG_charges` 
