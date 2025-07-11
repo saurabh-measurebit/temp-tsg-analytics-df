@@ -1,0 +1,26 @@
+config { type: "view" }
+
+
+select  DATE(requested_on, 'America/New_York') transaction_date,
+    DATETIME(requested_on, 'America/New_York') transaction_dt,
+    payment_id as transaction_id,
+    payment_type as transaction_type,
+    amount,
+    --'??' fee,
+    payment_id charge_id,
+    item_name product_name,
+    description,
+    customer_email,
+    coc.utm_source,
+    coc.utm_medium,
+    coc.utm_campaign,
+    coc.utm_content,
+    coc.utm_term,
+   'checkout.com' merchant,
+    case when v.clientOrderId = coc.transaction_id then 'checkout champ' end as cart
+    from airbyte.checkoutcom_payment_VW v
+      left join   `eng-particle-420006.dataform.stg_checkoutchamp_orders`  coc
+        on v.clientOrderId = coc.transaction_id
+
+-- select * 
+--   from airbyte.checkoutcom_payment_VW

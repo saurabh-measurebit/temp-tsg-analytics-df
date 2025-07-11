@@ -56,6 +56,30 @@ paypal_merchant as (
   from ${ref('int_paypal_trans')}
 ),
 
+-- Checkout.com transactions
+checkoutcom_merchant as (
+  select 
+    transaction_date,
+    transaction_dt,
+    transaction_id,
+    charge_id,
+    transaction_type,
+    cast(amount as float64) transaction_amount,
+    cast(fee  as float64) transaction_fee,
+    product_name,
+    customer_email,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    utm_content,
+    utm_term,
+    cart,
+    merchant,
+    cart samcart_account
+  from ${ref('int_checkoutcom_trans')}
+),
+
+
 -- Comine Stripe and Paypal transactions
 merchants_combined as (
     select *
@@ -63,6 +87,9 @@ merchants_combined as (
     union all
     select *
     from stripe_merchant
+    union all
+    select *
+    from checkoutcom_merchant
 ),
 
 -- Categorize transactions by product_name rules

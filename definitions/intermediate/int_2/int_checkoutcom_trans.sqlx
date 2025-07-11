@@ -1,0 +1,26 @@
+config { type: "view" }
+
+
+
+select   transaction_date,
+    transaction_dt,
+    transaction_id,
+    transaction_type,
+    amount,
+    s.fees fee,
+    charge_id,
+    product_name,
+    description,
+    customer_email,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    utm_content,
+    utm_term,
+   'checkout.com' merchant,
+    cart
+    from  dataform.stg_checkoutcom_payments p
+        left join ( select payment_id, sum(holding_currency_amount) fees 
+                       from dataform.stg_checkoutcom_fees 
+                        group by payment_id ) s
+            on p. transaction_id = payment_id

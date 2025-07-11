@@ -1,0 +1,46 @@
+config { type: "view" }
+
+
+
+
+WITH source AS (
+  SELECT
+--    JSON_VALUE(payment_reports_data, '$.count') AS record_count,
+    JSON_EXTRACT_ARRAY(payment_reports_data, '$.data') AS data_array
+  FROM airbyte.checkoutcom_payment_reports_VW
+),
+
+flattened_data AS (
+  SELECT
+    JSON_EXTRACT_SCALAR(item, '$.payment_id') AS payment_id,
+    JSON_EXTRACT_SCALAR(item, '$.action_id') AS action_id,
+    JSON_EXTRACT_SCALAR(item, '$.action_type') AS action_type,
+    JSON_EXTRACT_ARRAY(item, '$.breakdown') AS breakdown_array
+  FROM
+    source,
+    UNNEST(data_array) AS item
+)
+-- select *
+  -- from flattened_data
+,
+
+flattened_breakdowns AS (
+  SELECT
+    payment_id,
+    action_id,
+    action_type,
+    JSON_EXTRACT_SCALAR(b, '$.breakdown_type') AS breakdown_type,
+    CAST(JSON_EXTRACT_SCALAR(b, '$.holding_currency_amount') AS FLOAT64) AS holding_currency_amount,
+    JSON_EXTRACT_SCALAR(b, '$.holding_currency') AS holding_currency,
+    JSON_EXTRACT_SCALAR(b, '$.fee_detail') AS fee_detail
+  FROM
+    flattened_data,
+    UNNEST(breakdown_array) AS b
+)
+
+SELECT payment_id,	action_id,	action_type,	breakdown_type,	
+holding_currency_amount, holding_currency,	fee_detail
+FROM flattened_breakdowns
+WHERE holding_currency_amount < 0
+  AND breakdown_type NOT IN ('Capture', 'Authorization', 'Refund', 'Chargeback')
+
