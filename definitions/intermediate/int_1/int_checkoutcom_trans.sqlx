@@ -1,0 +1,36 @@
+config { type: "view" }
+
+with
+
+co_fees as (
+    select
+        payment_id,
+        coalesce(sum(holding_currency_amount), 0) as fee 
+    from ${ref('stg_checkoutcom_fees')}
+    group by payment_id
+),
+
+co_payments as (
+    select
+        transaction_date,
+        transaction_dt,
+        transaction_id,
+        transaction_type,
+        cast(amount as numeric) / 100 as amount,
+        charge_id,
+        product_name,
+        description,
+        customer_email,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        utm_content,
+        utm_term,
+        'checkout.com' merchant,
+        cart
+    from  ${ref('stg_checkoutcom_payments')}
+)
+
+select * from co_payments
+left join co_fees
+on co_payments.transaction_id = co_fees.payment_id
