@@ -16,7 +16,7 @@ co_payments as (
         transaction_dt,
         transaction_id,
         transaction_type,
-        cast(amount as numeric) / 100 as amount,
+        amount,
         charge_id,
         product_name,
         description,
