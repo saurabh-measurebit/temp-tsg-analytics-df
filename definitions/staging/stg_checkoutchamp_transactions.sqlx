@@ -25,6 +25,7 @@ select
     case
         when lower(merchant) like '%paypal%' then 'paypal'
         when lower(merchant) like '%stripe%' then 'stripe'
+        when lower(merchant) like '%checkout%prod%' then 'checkout.com'
     end as merchant
 from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074`, unnest(json_extract_array(items)) as item
 where
