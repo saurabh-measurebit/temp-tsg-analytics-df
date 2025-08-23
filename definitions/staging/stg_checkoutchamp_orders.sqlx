@@ -6,14 +6,31 @@
 
 config { type: "view" }
 
-select
+select distinct  
     date(dateCreated) as order_date,
     cast(totalAmount as float64) as order_amount,
-    clientOrderId as transaction_id,
+    t.clientOrderId as transaction_id,
     UTMSource as utm_source,
     UTMMedium as utm_medium,
     UTMCampaign as utm_campaign,
     UTMContent as utm_content,
     UTMTerm as utm_term
-from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
-where orderStatus not in ('PARTIAL', 'REFUNDED')
+from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074` t
+    join (select clientOrderId, max(dateUpdated)maxdateUpdated
+                from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
+                    group by clientOrderId
+                    )s
+        on s.clientOrderId = t.clientOrderId
+            and t.dateUpdated = s.maxdateUpdated
+
+-- select
+--     date(dateCreated) as order_date,
+--     cast(totalAmount as float64) as order_amount,
+--     clientOrderId as transaction_id,
+--     UTMSource as utm_source,
+--     UTMMedium as utm_medium,
+--     UTMCampaign as utm_campaign,
+--     UTMContent as utm_content,
+--     UTMTerm as utm_term
+-- from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
+-- where orderStatus not in ('PARTIAL', 'REFUNDED')
