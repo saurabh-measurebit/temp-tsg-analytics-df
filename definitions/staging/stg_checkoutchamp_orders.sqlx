@@ -18,10 +18,12 @@ select distinct
 from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074` t
     join (select clientOrderId, max(dateUpdated)maxdateUpdated
                 from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
+                where orderStatus not in ( 'REFUNDED')
                     group by clientOrderId
                     )s
         on s.clientOrderId = t.clientOrderId
             and t.dateUpdated = s.maxdateUpdated
+ where orderStatus not in ( 'REFUNDED')
 
 -- select
 --     date(dateCreated) as order_date,
