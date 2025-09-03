@@ -6,6 +6,7 @@
 
 config { type: "view" }
 
+
 select distinct  
     date(dateCreated) as order_date,
     cast(totalAmount as float64) as order_amount,
@@ -15,15 +16,35 @@ select distinct
     UTMCampaign as utm_campaign,
     UTMContent as utm_content,
     UTMTerm as utm_term
-from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074` t
+from  `eng-particle-420006.airbyte.checkoutchamp_orders` t
     join (select clientOrderId, max(dateUpdated)maxdateUpdated
-                from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
+                from `eng-particle-420006.airbyte.checkoutchamp_orders`
                 where orderStatus not in ( 'REFUNDED')
                     group by clientOrderId
                     )s
         on s.clientOrderId = t.clientOrderId
             and t.dateUpdated = s.maxdateUpdated
  where orderStatus not in ( 'REFUNDED')
+
+ 
+-- select distinct  
+--     date(dateCreated) as order_date,
+--     cast(totalAmount as float64) as order_amount,
+--     t.clientOrderId as transaction_id,
+--     UTMSource as utm_source,
+--     UTMMedium as utm_medium,
+--     UTMCampaign as utm_campaign,
+--     UTMContent as utm_content,
+--     UTMTerm as utm_term
+-- from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074` t
+--     join (select clientOrderId, max(dateUpdated)maxdateUpdated
+--                 from `tsg-transaction-data.checkout_champ_export.checkout_champ_orders_8589937074`
+--                 where orderStatus not in ( 'REFUNDED')
+--                     group by clientOrderId
+--                     )s
+--         on s.clientOrderId = t.clientOrderId
+--             and t.dateUpdated = s.maxdateUpdated
+--  where orderStatus not in ( 'REFUNDED')
 
 -- select
 --     date(dateCreated) as order_date,
