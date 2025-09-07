@@ -4,6 +4,8 @@
 
 config { type: "view" }
 
+
+
 select
     id as transaction_id,
     json_extract_scalar(utm_parameters, '$.source') as utm_source,
@@ -13,9 +15,9 @@ select
     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
     lower(processor_name) as processor_name,
-    date(datetime(order_date, "America/New_York")) as order_date,
+    date(timestamp(order_date, "America/New_York")) as order_date,
     'tsg' as samcart_account 
-from `tsg-transaction-data.samcart_export.samcart_orders_8589937073`
+from `airbyte.samcart_TSG_orders`
 
 UNION ALL
 
@@ -28,7 +30,36 @@ select
     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
     lower(processor_name) as processor_name,
-    date(datetime(order_date, "America/New_York")) as order_date,
+    date(timestamp(order_date, "America/New_York")) as order_date,
     'scg' as samcart_account 
-from `tsg-transaction-data.samcart_scg_export.orders`
+from `airbyte.samcart_SCG_orders`
+
+
+-- select
+--     id as transaction_id,
+--     json_extract_scalar(utm_parameters, '$.source') as utm_source,
+--     json_extract_scalar(utm_parameters, '$.medium') as utm_medium,
+--     json_extract_scalar(utm_parameters, '$.campaign') as utm_campaign,
+--     json_extract_scalar(utm_parameters, '$.content') as utm_content,
+--     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
+--     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
+--     lower(processor_name) as processor_name,
+--     date(datetime(order_date, "America/New_York")) as order_date,
+--     'tsg' as samcart_account 
+-- from `tsg-transaction-data.samcart_export.samcart_orders_8589937073`
+
+-- UNION ALL
+
+-- select
+--     id as transaction_id,
+--     json_extract_scalar(utm_parameters, '$.source') as utm_source,
+--     json_extract_scalar(utm_parameters, '$.medium') as utm_medium,
+--     json_extract_scalar(utm_parameters, '$.campaign') as utm_campaign,
+--     json_extract_scalar(utm_parameters, '$.content') as utm_content,
+--     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
+--     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
+--     lower(processor_name) as processor_name,
+--     date(datetime(order_date, "America/New_York")) as order_date,
+--     'scg' as samcart_account 
+-- from `tsg-transaction-data.samcart_scg_export.orders`
 

@@ -4,12 +4,13 @@
 
 config { type: "view" }
 
+
 select
     id as sam_customer_id,
     email,
     created_at as create_date, 
     'tsg' as samcart_account 
-from `tsg-transaction-data.samcart_export.samcart_customers_8589937073` 
+from `airbyte.samcart_TSG_customers`
 
 UNION ALL
 
@@ -18,4 +19,20 @@ select
     email,
     created_at as create_date, 
     'scg' as samcart_account 
-from `tsg-transaction-data.samcart_scg_export.customers`
+from `airbyte.samcart_SCG_customers`
+
+-- select
+--     id as sam_customer_id,
+--     email,
+--     created_at as create_date, 
+--     'tsg' as samcart_account 
+-- from `tsg-transaction-data.samcart_export.samcart_customers_8589937073` 
+
+-- UNION ALL
+
+-- select 
+--     id as sam_customer_id,
+--     email,
+--     created_at as create_date, 
+--     'scg' as samcart_account 
+-- from `tsg-transaction-data.samcart_scg_export.customers`
