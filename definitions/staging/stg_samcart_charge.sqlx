@@ -12,7 +12,7 @@ with
 samcart_tsg as (
     select
         date(timestamp(created_at, "America/New_York")) as charge_date,
-        timestamp(created_at, "America/New_York") as charge_dt,
+        datetime(timestamp(created_at, "America/New_York")) as charge_dt,
         customer_id as sam_customer_id,
         order_id as transaction_id,
         processor_transaction_id as charge_id,
@@ -34,7 +34,7 @@ samcart_tsg as (
 samcart_scg as (
     select
         date(timestamp(created_at, "America/New_York")) as charge_date,
-        timestamp(created_at, "America/New_York") as charge_dt,
+        datetime(timestamp(created_at, "America/New_York")) as charge_dt,
         customer_id as sam_customer_id,
         order_id as transaction_id,
         processor_transaction_id as charge_id,
