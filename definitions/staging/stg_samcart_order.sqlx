@@ -15,7 +15,7 @@ select
     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
     lower(processor_name) as processor_name,
-    date(timestamp(order_date, "America/New_York")) as order_date,
+    date(timestamp(concat(order_date, ' UTC')), "America/New_York") as order_date,
     'tsg' as samcart_account 
 from `airbyte.samcart_TSG_orders`
 
@@ -30,7 +30,7 @@ select
     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
     lower(processor_name) as processor_name,
-    date(timestamp(order_date, "America/New_York")) as order_date,
+    date(timestamp(concat(order_date, ' UTC')), "America/New_York") as order_date,
     'scg' as samcart_account 
 from `airbyte.samcart_SCG_orders`
 

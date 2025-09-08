@@ -6,7 +6,8 @@ config { type: "view" }
 
 select
     date(dateCreated) as transaction_date,
-    DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
+--    DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
+    datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") transaction_dt,
     clientOrderId as transaction_id,
     case
         when txnType = 'SALE' then 'charge'
@@ -37,6 +38,7 @@ UNION ALL
 select
     date(dateCreated) as transaction_date,
     DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
+    --datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") transaction_dt,
     clientOrderId as transaction_id,
     case
         when txnType = 'SALE' then 'charge'

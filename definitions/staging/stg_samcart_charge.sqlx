@@ -11,8 +11,10 @@ with
 -- TSG samcart
 samcart_tsg as (
     select
-        date(timestamp(created_at, "America/New_York")) as charge_date,
-        datetime(timestamp(created_at, "America/New_York")) as charge_dt,
+ --       date(timestamp(created_at, "America/New_York")) as charge_date,
+        date(timestamp(concat(created_at, ' UTC')), "America/New_York") charge_date,
+        datetime(timestamp(concat(created_at, ' UTC')), "America/New_York") charge_dt,
+        -- datetime(timestamp(created_at, "America/New_York")) as charge_dt,
         customer_id as sam_customer_id,
         order_id as transaction_id,
         processor_transaction_id as charge_id,
@@ -33,8 +35,8 @@ samcart_tsg as (
 -- SCG samcart
 samcart_scg as (
     select
-        date(timestamp(created_at, "America/New_York")) as charge_date,
-        datetime(timestamp(created_at, "America/New_York")) as charge_dt,
+        date(timestamp(concat(created_at, ' UTC')), "America/New_York") charge_date,
+        datetime(timestamp(concat(created_at, ' UTC')), "America/New_York") charge_dt,
         customer_id as sam_customer_id,
         order_id as transaction_id,
         processor_transaction_id as charge_id,
