@@ -29,6 +29,7 @@ co_payments as (
         'checkout.com' merchant,
         cart
     from  ${ref('stg_checkoutcom_payments')}
+    where approved = true
 )
 
 select * from co_payments
