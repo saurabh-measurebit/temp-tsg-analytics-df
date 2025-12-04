@@ -140,6 +140,9 @@ select *
 from categorized
 where
   not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest.com")
+  -- 
+    or regexp_contains(ifnull(customer_email,""),r"(?i)dfgdf@gmail.com")
+    or regexp_contains(ifnull(customer_email,""),r"(?i)admin@gmail.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)measurebit.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)samcart.com")
     or regexp_contains(ifnull(customer_email,""),r"(?i)testinator.com")
