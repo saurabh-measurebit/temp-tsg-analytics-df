@@ -99,7 +99,12 @@ categorized as (
     transaction_dt,
     transaction_id,
     charge_id,
-    transaction_type,
+    -- Get rid of these other weirdo charge types
+    CASE 
+        when transaction_type = "charge" OR transaction_type = "Recurring" OR transaction_type = "Regular" 
+        THEN "charge"
+        ELSE transaction_type
+    END as transaction_type,
     transaction_amount,
     transaction_fee,
     product_name,
