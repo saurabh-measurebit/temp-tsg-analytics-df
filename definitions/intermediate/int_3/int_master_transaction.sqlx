@@ -136,7 +136,7 @@ categorized as (
     utm_campaign,
     utm_content,
     utm_term,
-    shipCountry,
+    shipCountry as country,
     cart,
     merchant,
     samcart_account
