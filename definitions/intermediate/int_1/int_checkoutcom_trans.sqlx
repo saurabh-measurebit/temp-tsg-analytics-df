@@ -27,7 +27,8 @@ co_payments as (
         utm_content,
         utm_term,
         'checkout.com' merchant,
-        cart
+        cart,
+        shipCountry
     from  ${ref('stg_checkoutcom_payments')}
     where approved = true
 )

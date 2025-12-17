@@ -95,6 +95,7 @@ stripe_add_utms_cc as (
     t2.utm_campaign,
     t2.utm_content,
     t2.utm_term,
+    t2.shipCountry,
     t1.merchant,
     t2.cart,
     '' as samcart_account
@@ -120,6 +121,7 @@ stripe_add_utms_combined as (
     coalesce(t1.utm_campaign, t2.utm_campaign) as utm_campaign,
     coalesce(t1.utm_content, t2.utm_content) as utm_content,
     coalesce(t1.utm_term, t2.utm_term) as utm_term,
+    t2.shipCountry,
     t1.merchant,
     coalesce(case when t2.cart = 'samcart' then 'samcart' end, t1.cart, 'unknown') as cart,
     coalesce(t2.samcart_account, '' ) as samcart_account

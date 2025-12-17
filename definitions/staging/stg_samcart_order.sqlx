@@ -14,6 +14,7 @@ select
     json_extract_scalar(utm_parameters, '$.content') as utm_content,
     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
+    json_extract_scalar(shipping_address, '$.country') AS shipCountry,
     lower(processor_name) as processor_name,
     date(timestamp(concat(order_date, ' UTC')), "America/New_York") as order_date,
     'tsg' as samcart_account 
@@ -29,6 +30,7 @@ select
     json_extract_scalar(utm_parameters, '$.content') as utm_content,
     json_extract_scalar(custom_parameters, '$.utm_term') as utm_term,
     json_extract_scalar(cart_items[0], '$.product_name') AS product_name,
+    json_extract_scalar(shipping_address, '$.country') AS shipCountry,
     lower(processor_name) as processor_name,
     date(timestamp(concat(order_date, ' UTC')), "America/New_York") as order_date,
     'scg' as samcart_account 

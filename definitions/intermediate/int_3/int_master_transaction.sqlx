@@ -27,6 +27,7 @@ stripe_merchant as (
     utm_campaign,
     utm_content,
     utm_term,
+    shipCountry,
     cart,
     merchant,
     samcart_account
@@ -50,6 +51,7 @@ paypal_merchant as (
     utm_campaign,
     utm_content,
     utm_term,
+    shipCountry,
     cart,
     merchant,
     samcart_account
@@ -73,6 +75,7 @@ checkoutcom_merchant as (
     utm_campaign,
     utm_content,
     utm_term,
+    shipCountry,
     cart,
     merchant,
     cart samcart_account
@@ -133,6 +136,7 @@ categorized as (
     utm_campaign,
     utm_content,
     utm_term,
+    shipCountry,
     cart,
     merchant,
     samcart_account
@@ -169,6 +173,9 @@ where
 
 select *
 from remove_tests
+
+
+
 -- where customer_email = 'domalley64@yahoo.com' -- for the purposes of debugging
 
 -- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }

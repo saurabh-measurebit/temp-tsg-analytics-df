@@ -32,7 +32,8 @@ sc_orders as (
         utm_content,
         utm_term,
         product_name, 
-        order_date
+        order_date,
+        shipCountry
     from ${ref('stg_samcart_order')}
 ),
 
@@ -64,10 +65,11 @@ sc_joined as (
         utm_campaign,
         utm_content,
         utm_term,
+        o1.shipCountry,
         'samcart' as cart,
         samcart_account
     from sc_charges                               t1
-    left join sc_orders using(transaction_id)
+    left join sc_orders o1 using(transaction_id)
     left join sc_customers using(sam_customer_id)
 )
 
