@@ -18,6 +18,7 @@ select
   metadata,
   json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
   json_extract_scalar(json_query(metadata, '$.clientOrderId')) as transaction_id,  -- client_order_id comes from checkout champ
+  json_extract_scalar(shipping, '$.address.country') as country
 from `eng-particle-420006.airbyte.STRIPE_charges`
 
 union all
@@ -35,4 +36,5 @@ select
   metadata,
   json_extract_scalar(json_query(metadata, '$.ProductDescription')) as product_name,
   json_extract_scalar(json_query(metadata, '$.clientOrderId')) as transaction_id,  -- client_order_id comes from checkout champ
+  json_extract_scalar(shipping, '$.address.country') as country
 from `eng-particle-420006.airbyte.STRIPE_SCG_charges` 

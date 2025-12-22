@@ -4,6 +4,7 @@
 
 config { type: "view" }
 
+with coc_trans as (
 select
     date(dateCreated) as transaction_date,
 --    DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
@@ -27,7 +28,8 @@ select
         when lower(merchant) like '%paypal%' then 'paypal'
         when lower(merchant) like '%stripe%' then 'stripe'
         when lower(merchant) like '%checkout%prod%' then 'checkout.com'
-    end as merchant
+    end as merchant,
+    country
     -- select dateCreated
 from `eng-particle-420006.airbyte.checkoutchamp_transactions`, unnest(json_extract_array(items)) as item
 where
@@ -58,7 +60,8 @@ select
         when lower(merchant) like '%paypal%' then 'paypal'
         when lower(merchant) like '%stripe%' then 'stripe'
         when lower(merchant) like '%checkout%prod%' then 'checkout.com'
-    end as merchant
+    end as merchant,
+    country,
     -- select dateCreated
 from (SELECT o.*
 from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074` o
@@ -67,6 +70,11 @@ from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_858
   where n.transactionId is null), unnest(json_extract_array(items)) as item
 where
     lower(merchant) not like '%test%'
+)
+
+select *
+from coc_trans
+order by transaction_date desc
 
 -- select
 --     date(dateCreated) as transaction_date,

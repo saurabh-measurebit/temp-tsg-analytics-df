@@ -17,7 +17,7 @@ cc_transactions as (
         cast(product_price as numeric) as transaction_amount, -- using product_price rather than original transaction_amount since a transaction can contain one or more products
         product_name,
         customer_email,
-        null as shipCountry,
+        country as shipCountry,
         'paypal' as merchant
     from ${ref('stg_checkoutchamp_transactions')}  
     where lower(merchant) like '%paypal%'
@@ -53,7 +53,7 @@ cc_joined as (
         utm_campaign,
         utm_content,
         utm_term,
-        t2.shipCountry,
+        COALESCE(t1.shipCountry, t2.shipCountry) as shipCountry,
         'checkout champ' as cart,
         '' as samcart_account
     from cc_transactions    t1
@@ -78,7 +78,7 @@ sc as (
         utm_campaign,
         utm_content,
         utm_term,
-        shipCountry,
+        country as shipCountry,
         cart, 
         samcart_account
     from ${ref('int_samcart')} 

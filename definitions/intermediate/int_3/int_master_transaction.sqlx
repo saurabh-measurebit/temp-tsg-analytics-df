@@ -1,181 +1,322 @@
----------------------------------------------------------
--- Query combines transactions from Stripe and Paypal
----------------------------------------------------------
-
-config { type: "table" ,
+config {
+    type: "table",
     bigquery: {
-        partitionBy:  "transaction_date"
+        partitionBy: "transaction_date"
     }
 }
 
-with
-
--- Stripe transactions
-stripe_merchant as (
-  select 
-    transaction_date,
-    transaction_dt,
-    transaction_id,
-    charge_id,
-    transaction_type,
-    transaction_amount,
-    transaction_fee,
-    product_name,
-    customer_email,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    utm_content,
-    utm_term,
-    shipCountry,
-    cart,
-    merchant,
-    samcart_account
-  from ${ref('int_stripe_trans')}
-),
-
--- Paypal transactions
-paypal_merchant as (
-  select
-    transaction_date,
-    transaction_dt,
-    transaction_id,
-    charge_id,
-    transaction_type,
-    transaction_amount,
-    cast(null as numeric) as transaction_fee,
-    product_name,
-    customer_email,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    utm_content,
-    utm_term,
-    shipCountry,
-    cart,
-    merchant,
-    samcart_account
-  from ${ref('int_paypal_trans')}
-),
-
--- Checkout.com transactions
-checkoutcom_merchant as (
-  select 
-    transaction_date,
-    transaction_dt,
-    transaction_id,
-    charge_id,
-    transaction_type,
-    cast(amount as float64) transaction_amount,
-    cast(fee  as float64) transaction_fee,
-    product_name,
-    customer_email,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    utm_content,
-    utm_term,
-    shipCountry,
-    cart,
-    merchant,
-    cart samcart_account
-  from ${ref('int_checkoutcom_trans')}
-),
-
-
--- Comine Stripe and Paypal transactions
-merchants_combined as (
-    select *
-    from paypal_merchant
-    union all
-    select *
-    from stripe_merchant
-    union all
-    select *
-    from checkoutcom_merchant
-),
-
--- Categorize transactions by product_name rules
-categorized as (
-  select
-    transaction_date,
-    transaction_dt,
-    transaction_id,
-    charge_id,
-    -- Get rid of these other weirdo charge types
-    CASE 
-        when transaction_type = "charge" OR transaction_type = "Recurring" OR transaction_type = "Regular" 
-        THEN "charge"
-        ELSE transaction_type
-    END as transaction_type,
-    transaction_amount,
-    transaction_fee,
-    product_name,
-    customer_email,
-    case
-      when regexp_contains(lower(ifnull(product_name,"")),r"founding member.*|.*all access.*|.*trial.*all access.*|.*trial all access.*|quick start package.*|all access membership.*|.*special offer.*20 minute shallowing fix.*|.*all access.*bonus|null|^[ ]$|^78$|^43$|^75$|^62$|^136$|^77$|^150$|^83$|^101$|^142$|^135$|^1$|^79$|^44$|^2$|^65$|^42$|^33$|$1 membership|^$|aa membership|147") and not (regexp_contains(lower(ifnull(product_name,"")),r"reviews")) then "All Access Membership"
-      when regexp_contains(lower(ifnull(product_name,"")),r"distance masterclass|20 minute distance fix.*") then "20 Minute Distance Fix"
-      when (not (regexp_contains(lower(ifnull(product_name,"")),r"all access|in person"))   
-        and regexp_contains(lower(ifnull(product_name,"")),r"20-minute shallowing fix|20 minute shallowing fix|20msf live payment|20 msf \\(\\$10\\)|134")) then "20 Minute Shallowing Fix"
-      when regexp_contains(lower(ifnull(product_name,"")),r"ball striking masterclass.*|ball striking master class") then "Ball Striking Masterclass"
-      when regexp_contains(lower(ifnull(product_name,"")),r"quick start report$|152|quick start") then "Quick Start Report"
-      when (regexp_contains(lower(ifnull(product_name,"")),r"unlimited online reviews|monthly (unlimited )?online swing reviews|monthly online unlimited swing reviews|rocket fuel swing reviews|rocket fuel swing reviews w/ robin rosado|110|114|121|94|123|108|112|monthly unlimited online lessons with clay ballard|rocket fuel|unlimited swing reviews|reviews") and not (regexp_contains(lower(ifnull(product_name,"")),r"swing plate.*")) ) then "Unlimited Swing Reviews"
-      when regexp_contains(lower(ifnull(product_name,"")),r".*in-person lesson with.*|.*in person.*|2 day.*with robin rosado.*|.*in-person.*") then "In Person Lesson"
-      when regexp_contains(lower(ifnull(product_name,"")),r"tsg distance golf clinic.*|distance clinic.*") then "Clinic"
-      when (regexp_contains(lower(ifnull(product_name,"")),r"swing plate|swing plate, base model, no alignment rods|swing plate with alignment rods and foam protector") or regexp_contains(lower(ifnull(product_name,"")),r"(?i)divot board|precision impact|check point swing laser|b1 blue strike.*|c3i|45° square strike wedge")) then "Training Aids"
-      when regexp_contains(lower(ifnull(product_name,"")),r"inside the ropes with clay(?: ballard)?") then "Inside the Ropes"
-      when regexp_contains(lower(ifnull(product_name,"")),r"double your lag in 30 minutes") then "Swing Courses"
-      when regexp_contains(lower(ifnull(product_name,"")),r"repayment for disputed charge") then "Disputes" 
-      when regexp_contains(lower(ifnull(product_name,"")),r"minute posture fix") then "Posture" 
-      when regexp_contains(lower(ifnull(product_name,"")),r"ball-then-turf masterclass|btmc") then "Ball-Then-Turf Mastercass"
-      when regexp_contains(lower(ifnull(product_name,"")),r"b29 blue brick") then "ShotCraft"  
-      else "Other"
-    end as product_category,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    utm_content,
-    utm_term,
-    shipCountry as country,
-    cart,
-    merchant,
-    samcart_account
-  from merchants_combined
-),
-
--- Filter out test transactions
-remove_tests as (
-select *
-from categorized
-where
-  not((regexp_contains(ifnull(customer_email,""),r"(?i)testingtest.com")
-  -- 
-    or regexp_contains(ifnull(customer_email,""),r"(?i)dfgdf@gmail.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)admin@gmail.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)measurebit.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)samcart.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)testinator.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)mailinator.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)topspeedgolf.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)aboundup.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)davidroconnell.com")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)measurementmarketing.io")
-    or regexp_contains(ifnull(customer_email,""),r"(?i)tomitrader.com")) )
-  and not((regexp_contains(lower(ifnull(product_name,"")),r"(?i)purchase from top speed golf")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)1 day renewal product 2")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)fake shippable good")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)test trial")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)test product")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)test membership")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)taxjar test")
-    or regexp_contains(lower(ifnull(product_name,"")),r"(?i)tsg level 1 instructor test")) )
-)
-
-select *
-from remove_tests
-
-
-
--- where customer_email = 'domalley64@yahoo.com' -- for the purposes of debugging
-
--- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }
+  ---------------------------------------------------------
+  -- Query combines transactions from Stripe and Paypal
+  ---------------------------------------------------------
+WITH
+  -- Stripe transactions
+  stripe_merchant AS (
+SELECT
+  transaction_date,
+  transaction_dt,
+  transaction_id,
+  charge_id,
+  transaction_type,
+  transaction_amount,
+  transaction_fee,
+  product_name,
+  customer_email,
+  utm_source,
+  utm_medium,
+  utm_campaign,
+  utm_content,
+  utm_term,
+  shipCountry,
+  cart,
+  merchant,
+  samcart_account
+FROM
+  ${ref('int_stripe_trans')} ),
+  -- Paypal transactions
+  paypal_merchant AS (
+SELECT
+  transaction_date,
+  transaction_dt,
+  transaction_id,
+  charge_id,
+  transaction_type,
+  transaction_amount,
+  CAST(NULL AS numeric) AS transaction_fee,
+  product_name,
+  customer_email,
+  utm_source,
+  utm_medium,
+  utm_campaign,
+  utm_content,
+  utm_term,
+  shipCountry,
+  cart,
+  merchant,
+  samcart_account
+FROM
+  ${ref('int_paypal_trans')} ),
+  -- Checkout.com transactions
+  checkoutcom_merchant AS (
+SELECT
+  transaction_date,
+  transaction_dt,
+  transaction_id,
+  charge_id,
+  transaction_type,
+  CAST(amount AS float64) transaction_amount,
+  CAST(fee AS float64) transaction_fee,
+  product_name,
+  customer_email,
+  utm_source,
+  utm_medium,
+  utm_campaign,
+  utm_content,
+  utm_term,
+  shipCountry,
+  cart,
+  merchant,
+  cart samcart_account
+FROM
+  ${ref('int_checkoutcom_trans')} ),
+  -- Comine Stripe and Paypal transactions
+  merchants_combined AS (
+SELECT
+  *
+FROM
+  paypal_merchant
+UNION ALL
+SELECT
+  *
+FROM
+  stripe_merchant
+UNION ALL
+SELECT
+  *
+FROM
+  checkoutcom_merchant ),
+  -- Categorize transactions by product_name rules
+  categorized AS (
+SELECT
+  transaction_date,
+  transaction_dt,
+  transaction_id,
+  charge_id,
+  -- Get rid of these other weirdo charge types
+  CASE
+    WHEN transaction_type = "charge" OR transaction_type = "Recurring" OR transaction_type = "Regular" THEN "charge"
+    ELSE transaction_type
+END
+  AS transaction_type,
+  transaction_amount,
+  transaction_fee,
+  product_name,
+  customer_email,
+  CASE
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"founding member.*|.*all access.*|.*trial.*all access.*|.*trial all access.*|quick start package.*|all access membership.*|.*special offer.*20 minute shallowing fix.*|.*all access.*bonus|null|^[ ]$|^78$|^43$|^75$|^62$|^136$|^77$|^150$|^83$|^101$|^142$|^135$|^1$|^79$|^44$|^2$|^65$|^42$|^33$|$1 membership|^$|aa membership|147") AND NOT (REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"reviews")) THEN "All Access Membership"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"distance masterclass|20 minute distance fix.*") THEN "20 Minute Distance Fix"
+    WHEN (NOT (REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"all access|in person")) AND REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"20-minute shallowing fix|20 minute shallowing fix|20msf live payment|20 msf \\(\\$10\\)|134")) THEN "20 Minute Shallowing Fix"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"ball striking masterclass.*|ball striking master class") THEN "Ball Striking Masterclass"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"quick start report$|152|quick start") THEN "Quick Start Report"
+    WHEN (REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"unlimited online reviews|monthly (unlimited )?online swing reviews|monthly online unlimited swing reviews|rocket fuel swing reviews|rocket fuel swing reviews w/ robin rosado|110|114|121|94|123|108|112|monthly unlimited online lessons with clay ballard|rocket fuel|unlimited swing reviews|reviews")
+    AND NOT (REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"swing plate.*")) ) THEN "Unlimited Swing Reviews"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r".*in-person lesson with.*|.*in person.*|2 day.*with robin rosado.*|.*in-person.*") THEN "In Person Lesson"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"tsg distance golf clinic.*|distance clinic.*") THEN "Clinic"
+    WHEN (REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"swing plate|swing plate, base model, no alignment rods|swing plate with alignment rods and foam protector") OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)divot board|precision impact|check point swing laser|b1 blue strike.*|c3i|45° square strike wedge")) THEN "Training Aids"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"inside the ropes with clay(?: ballard)?") THEN "Inside the Ropes"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"double your lag in 30 minutes") THEN "Swing Courses"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"repayment for disputed charge") THEN "Disputes"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"minute posture fix") THEN "Posture"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"ball-then-turf masterclass|btmc") THEN "Ball-Then-Turf Mastercass"
+    WHEN REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"b29 blue brick") THEN "ShotCraft"
+    ELSE "Other"
+END
+  AS product_category,
+  utm_source,
+  utm_medium,
+  utm_campaign,
+  utm_content,
+  utm_term,
+  shipCountry,
+  cart,
+  merchant,
+  samcart_account
+FROM
+  merchants_combined ),
+  -- Filter out test transactions
+  remove_tests AS (
+SELECT
+  transaction_date,
+  transaction_dt,
+  transaction_id,
+  charge_id,
+  transaction_type,
+  transaction_amount,
+  transaction_fee,
+  product_name,
+  customer_email,
+  product_category,
+  utm_source,
+  utm_medium,
+  utm_campaign,
+  utm_content,
+  utm_term,
+  CASE
+    WHEN shipCountry = "AD" THEN "Andorra"
+WHEN shipCountry = "AE" THEN "United Arab Emirates"
+WHEN shipCountry = "AF" THEN "Afghanistan"
+WHEN shipCountry = "AL" THEN "Albania"
+WHEN shipCountry = "AR" THEN "Argentina"
+WHEN shipCountry = "AT" THEN "Austria"
+WHEN shipCountry = "AU" THEN "Australia"
+WHEN shipCountry = "AX" THEN "Åland Islands"
+WHEN shipCountry = "BB" THEN "Barbados"
+WHEN shipCountry = "BD" THEN "Bangladesh"
+WHEN shipCountry = "BE" THEN "Belgium"
+WHEN shipCountry = "BF" THEN "Burkina Faso"
+WHEN shipCountry = "BG" THEN "Bulgaria"
+WHEN shipCountry = "BH" THEN "Bahrain"
+WHEN shipCountry = "BM" THEN "Bermuda"
+WHEN shipCountry = "BN" THEN "Brunei"
+WHEN shipCountry = "BR" THEN "Brazil"
+WHEN shipCountry = "BS" THEN "Bahamas"
+WHEN shipCountry = "BW" THEN "Botswana"
+WHEN shipCountry = "BY" THEN "Belarus"
+WHEN shipCountry = "CA" THEN "Canada"
+WHEN shipCountry = "CH" THEN "Switzerland"
+WHEN shipCountry = "CI" THEN "Côte d'Ivoire"
+WHEN shipCountry = "CL" THEN "Chile"
+WHEN shipCountry = "CN" THEN "China"
+WHEN shipCountry = "CO" THEN "Colombia"
+WHEN shipCountry = "CR" THEN "Costa Rica"
+WHEN shipCountry = "CY" THEN "Cyprus"
+WHEN shipCountry = "CZ" THEN "Czech Republic"
+WHEN shipCountry = "DE" THEN "Germany"
+WHEN shipCountry = "DK" THEN "Denmark"
+WHEN shipCountry = "DO" THEN "Dominican Republic"
+WHEN shipCountry = "EC" THEN "Ecuador"
+WHEN shipCountry = "EE" THEN "Estonia"
+WHEN shipCountry = "EG" THEN "Egypt"
+WHEN shipCountry = "ES" THEN "Spain"
+WHEN shipCountry = "FI" THEN "Finland"
+WHEN shipCountry = "FJ" THEN "Fiji"
+WHEN shipCountry = "FR" THEN "France"
+WHEN shipCountry = "GB" THEN "United Kingdom"
+WHEN shipCountry = "GG" THEN "Guernsey"
+WHEN shipCountry = "GH" THEN "Ghana"
+WHEN shipCountry = "GI" THEN "Gibraltar"
+WHEN shipCountry = "GR" THEN "Greece"
+WHEN shipCountry = "GT" THEN "Guatemala"
+WHEN shipCountry = "GU" THEN "Guam"
+WHEN shipCountry = "GY" THEN "Guyana"
+WHEN shipCountry = "HK" THEN "Hong Kong"
+WHEN shipCountry = "HR" THEN "Croatia"
+WHEN shipCountry = "HU" THEN "Hungary"
+WHEN shipCountry = "ID" THEN "Indonesia"
+WHEN shipCountry = "IE" THEN "Ireland"
+WHEN shipCountry = "IL" THEN "Israel"
+WHEN shipCountry = "IM" THEN "Isle of Man"
+WHEN shipCountry = "IN" THEN "India"
+WHEN shipCountry = "IS" THEN "Iceland"
+WHEN shipCountry = "IT" THEN "Italy"
+WHEN shipCountry = "JE" THEN "Jersey"
+WHEN shipCountry = "JP" THEN "Japan"
+WHEN shipCountry = "KE" THEN "Kenya"
+WHEN shipCountry = "KR" THEN "South Korea"
+WHEN shipCountry = "KW" THEN "Kuwait"
+WHEN shipCountry = "KY" THEN "Cayman Islands"
+WHEN shipCountry = "KZ" THEN "Kazakhstan"
+WHEN shipCountry = "LK" THEN "Sri Lanka"
+WHEN shipCountry = "LT" THEN "Lithuania"
+WHEN shipCountry = "LU" THEN "Luxembourg"
+WHEN shipCountry = "LV" THEN "Latvia"
+WHEN shipCountry = "MA" THEN "Morocco"
+WHEN shipCountry = "MC" THEN "Monaco"
+WHEN shipCountry = "MQ" THEN "Martinique"
+WHEN shipCountry = "MT" THEN "Malta"
+WHEN shipCountry = "MU" THEN "Mauritius"
+WHEN shipCountry = "MW" THEN "Malawi"
+WHEN shipCountry = "MX" THEN "Mexico"
+WHEN shipCountry = "MY" THEN "Malaysia"
+WHEN shipCountry = "MM" THEN "Myanmar"
+WHEN shipCountry = "NA" THEN "Namibia"
+WHEN shipCountry = "NC" THEN "New Caledonia"
+WHEN shipCountry = "NL" THEN "Netherlands"
+WHEN shipCountry = "NO" THEN "Norway"
+WHEN shipCountry = "NZ" THEN "New Zealand"
+WHEN shipCountry = "OM" THEN "Oman"
+WHEN shipCountry = "PA" THEN "Panama"
+WHEN shipCountry = "PE" THEN "Peru"
+WHEN shipCountry = "PF" THEN "French Polynesia"
+WHEN shipCountry = "PG" THEN "Papua New Guinea"
+WHEN shipCountry = "PH" THEN "Philippines"
+WHEN shipCountry = "PK" THEN "Pakistan"
+WHEN shipCountry = "PL" THEN "Poland"
+WHEN shipCountry = "PR" THEN "Puerto Rico"
+WHEN shipCountry = "PT" THEN "Portugal"
+WHEN shipCountry = "PY" THEN "Paraguay"
+WHEN shipCountry = "QA" THEN "Qatar"
+WHEN shipCountry = "RE" THEN "Réunion"
+WHEN shipCountry = "RO" THEN "Romania"
+WHEN shipCountry = "RU" THEN "Russia"
+WHEN shipCountry = "RW" THEN "Rwanda"
+WHEN shipCountry = "SA" THEN "Saudi Arabia"
+WHEN shipCountry = "SE" THEN "Sweden"
+WHEN shipCountry = "SG" THEN "Singapore"
+WHEN shipCountry = "SI" THEN "Slovenia"
+WHEN shipCountry = "SK" THEN "Slovakia"
+WHEN shipCountry = "SV" THEN "El Salvador"
+WHEN shipCountry = "TH" THEN "Thailand"
+WHEN shipCountry = "TR" THEN "Turkey"
+WHEN shipCountry = "TT" THEN "Trinidad and Tobago"
+WHEN shipCountry = "TW" THEN "Taiwan"
+WHEN shipCountry = "TZ" THEN "Tanzania"
+WHEN shipCountry = "UG" THEN "Uganda"
+WHEN shipCountry = "UM" THEN "United States Minor Outlying Islands"
+WHEN shipCountry = "US" THEN "United States"
+WHEN shipCountry = "UY" THEN "Uruguay"
+WHEN shipCountry = "UZ" THEN "Uzbekistan"
+WHEN shipCountry = "VI" THEN "Virgin Islands"
+WHEN shipCountry = "VN" THEN "Vietnam"
+WHEN shipCountry = "WS" THEN "Samoa"
+WHEN shipCountry = "ZA" THEN "South Africa"
+WHEN shipCountry = "ZM" THEN "Zambia"
+WHEN shipCountry = "ZW" THEN "Zimbabwe"
+WHEN LOWER(shipCountry) = "us" THEN "United States"
+WHEN shipCountry = "Great Britain" THEN "United Kingdom"
+WHEN shipCountry = "Korea, Republic of" THEN "South Korea"
+WHEN shipCountry = "Taiwan, Province of China" THEN "Taiwan"
+ELSE shipCountry
+END
+  AS country,
+  cart,
+  merchant,
+  samcart_account,
+FROM
+  categorized
+WHERE
+  NOT((REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)testingtest.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)dfgdf@gmail.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)admin@gmail.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)measurebit.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)samcart.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)testinator.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)mailinator.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)topspeedgolf.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)aboundup.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)davidroconnell.com")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)measurementmarketing.io")
+      OR REGEXP_CONTAINS(IFNULL(customer_email,""),r"(?i)tomitrader.com")) )
+  AND NOT((REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)purchase from top speed golf")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)1 day renewal product 2")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)fake shippable good")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)test trial")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)test product")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)test membership")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)taxjar test")
+      OR REGEXP_CONTAINS(LOWER(IFNULL(product_name,"")),r"(?i)tsg level 1 instructor test")) ) )
+SELECT
+  *
+FROM
+  remove_tests
+  -- where customer_email = 'domalley64@yahoo.com' -- for the purposes of debugging
+  -- ${when(incremental(), `where transaction_date >= (select max(transaction_date) from ${self()})`) }

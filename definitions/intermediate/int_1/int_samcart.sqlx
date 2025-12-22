@@ -41,7 +41,8 @@ sc_orders as (
 sc_customers as (
     select
         sam_customer_id,
-        email as customer_email
+        email as customer_email,
+        country
     from ${ref('stg_samcart_customer')}  
 ),
 
@@ -65,7 +66,7 @@ sc_joined as (
         utm_campaign,
         utm_content,
         utm_term,
-        o1.shipCountry,
+        COALESCE(country, o1.shipCountry) as country,
         'samcart' as cart,
         samcart_account
     from sc_charges                               t1

@@ -16,53 +16,7 @@ select distinct
     UTMCampaign as utm_campaign,
     UTMContent as utm_content,
     UTMTerm as utm_term,
-    CASE
-        WHEN shipCountry = "US" THEN "United States"
-        WHEN shipCountry = "CA" THEN "Canada"
-        WHEN shipCountry = "GB" THEN "Great Britain"
-        WHEN shipCountry = "UK" THEN "United Kingdom"
-        WHEN shipCountry = "HK" THEN "Hong Kong"
-        WHEN shipCountry = "DE" THEN "Germany"
-        WHEN shipCountry = "PL" THEN "Poland"
-        WHEN shipCountry = "DO" THEN "Dominican Republic"
-        WHEN shipCountry = "ID" THEN "Indonesia"
-        WHEN shipCountry = "BM" THEN "Bermuda"
-        WHEN shipCountry = "VI" THEN "Virgin Islands"
-        WHEN shipCountry = "LU" THEN "Luxembourg"
-        WHEN shipCountry = "LT" THEN "Lithuania"
-        WHEN shipCountry = "AE" THEN "United Arab Emirates"
-        WHEN shipCountry = "NO" THEN "Norway"
-        WHEN shipCountry = "PH" THEN "Philippines"
-        WHEN shipCountry = "BN" THEN "Brunei"
-        WHEN shipCountry = "AL" THEN "Albania"
-        WHEN shipCountry = "MX" THEN "Mexico"
-        WHEN shipCountry = "NZ" THEN "New Zealand"
-        WHEN shipCountry = "FI" THEN "Finland"
-        WHEN shipCountry = "CL" THEN "Chile"
-        WHEN shipCountry = "AT" THEN "Austria"
-        WHEN shipCountry = "CH" THEN "Switzerland"
-        WHEN shipCountry = "AR" THEN "Argentina"
-        WHEN shipCountry = "PR" THEN "Puerto Rico"
-        WHEN shipCountry = "PT" THEN "Portugal"
-        WHEN shipCountry = "SE" THEN "Sweden"
-        WHEN shipCountry = "JP" THEN "Japan"
-        WHEN shipCountry = "UY" THEN "Uruguay"
-        WHEN shipCountry = "TW" THEN "Taiwan"
-        WHEN shipCountry = "DK" THEN "Denmark"
-        WHEN shipCountry = "SG" THEN "Singapore"
-        WHEN shipCountry = "IS" THEN "Iceland"
-        WHEN shipCountry = "ZW" THEN "Zimbabwe"
-        WHEN shipCountry = "ES" THEN "Spain"
-        WHEN shipCountry = "CO" THEN "Colombia"
-        WHEN shipCountry = "FR" THEN "France"
-        WHEN shipCountry = "IE" THEN "Ireland"
-        WHEN shipCountry = "ZA" THEN "South Africa"
-        WHEN shipCountry = "AU" THEN "Australia"
-        WHEN shipCountry = "BE" THEN "Belgium"
-        WHEN shipCountry = "MY" THEN "Malaysia"
-        WHEN shipCountry = "KR" THEN "South Korea"
-ELSE shipCountry
-    END as shipCountry
+    shipCountry,
 from  `eng-particle-420006.airbyte.checkoutchamp_orders` t
     join (select clientOrderId, max(dateUpdated)maxdateUpdated
                 from `eng-particle-420006.airbyte.checkoutchamp_orders`

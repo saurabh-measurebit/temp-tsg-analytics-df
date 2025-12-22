@@ -13,7 +13,8 @@ config { type: "view" }
 select
     charge_id,
     email, 
-    t1.samcart_account
+    t1.samcart_account,
+    country
 from ${ref('stg_samcart_charge')}         t1
 left join ${ref('stg_samcart_customer')}  t2
 using (sam_customer_id, samcart_account)
@@ -24,7 +25,8 @@ union all
 select 
     charge_id,
     email,
-    'unknown' as samcart_account
+    'unknown' as samcart_account,
+    country
 from ${ref('stg_stripe_charge')}          t1
 left join  ${ref('stg_stripe_customer')}  t2
 using (stripe_customer_id)

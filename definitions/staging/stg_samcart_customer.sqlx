@@ -9,6 +9,7 @@ select
     id as sam_customer_id,
     email,
     created_at as create_date, 
+    json_extract_scalar(addresses[0], '$.country') as country,
     'tsg' as samcart_account 
 from `airbyte.samcart_TSG_customers`
 
@@ -18,6 +19,7 @@ select
     id as sam_customer_id,
     email,
     created_at as create_date, 
+    json_extract_scalar(addresses[0], '$.country') as country,
     'scg' as samcart_account 
 from `airbyte.samcart_SCG_customers`
 

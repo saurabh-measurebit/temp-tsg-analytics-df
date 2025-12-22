@@ -11,7 +11,8 @@ with
 stg_stripe_charges as   (
     select 
         transaction_id,
-        charge_id 
+        charge_id,
+        country
     from ${ref('stg_stripe_charge')}  
     where transaction_id is not null
 ),
@@ -28,7 +29,7 @@ joined as (
         utm_campaign,
         utm_content,
         utm_term,
-        t2.shipCountry,
+        COALESCE(t2.shipCountry, country) as shipCountry,
         case when t1.transaction_id = t2.transaction_id then 'checkout champ' end as cart
     from stg_stripe_charges                       t1
     left join ${ref('stg_checkoutchamp_orders')}  t2  
@@ -37,6 +38,7 @@ joined as (
 
 select *
 from joined
+
 
 
 -- select
