@@ -55,7 +55,7 @@ sc_joined as (
         charge_id,
         transaction_type,
         case
-            when transaction_type = 'refund' and transaction_amount > 0 then transaction_amount
+            when transaction_type = 'refund' and transaction_amount > 0 then transaction_amount 
             else transaction_amount
         end as transaction_amount,
         product_name,
