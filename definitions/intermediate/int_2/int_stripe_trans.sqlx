@@ -79,9 +79,20 @@ stripe_add_emails as (
   on t1.charge_id = t2.charge_id
 ),
 
+-- Deduplicate Checkout Champ to one row per charge_id
+cc_utm_deduped as (
+  select * from (
+    select *,
+      row_number() over (partition by charge_id order by order_date desc) as rn
+    from ${ref('int_checkoutchamp_source')}
+    where charge_id is not null
+  )
+  where rn = 1
+),
+
 -- Add UTMs and cart from Checkout Champ
 stripe_add_utms_cc as (
-  select 
+  select
     t1.transaction_date,
     t1.transaction_dt,
     t1.transaction_id,
@@ -100,14 +111,25 @@ stripe_add_utms_cc as (
     t1.merchant,
     t2.cart,
     '' as samcart_account
-  from  stripe_add_emails                        t1
-  left join  ${ref('int_checkoutchamp_source')}  t2
+  from  stripe_add_emails       t1
+  left join  cc_utm_deduped     t2
   on t1.balance_trans_table_charge_id = t2.charge_id
+),
+
+-- Deduplicate SamCart to one row per charge_id
+samcart_utm_deduped as (
+  select * from (
+    select *,
+      row_number() over (partition by charge_id order by transaction_date desc) as rn
+    from ${ref('int_samcart')}
+    where charge_id is not null
+  )
+  where rn = 1
 ),
 
 -- Add UTMs from Samcart & checkout champ combined
 stripe_add_utms_combined as (
-  select 
+  select
     t1.transaction_date,
     t1.transaction_dt,
     t1.transaction_id,
@@ -126,8 +148,8 @@ stripe_add_utms_combined as (
     t1.merchant,
     coalesce(case when t2.cart = 'samcart' then 'samcart' end, t1.cart, 'unknown') as cart,
     coalesce(t2.samcart_account, '' ) as samcart_account
-  from  stripe_add_utms_cc           t1
-  left join  ${ref('int_samcart')}   t2
+  from  stripe_add_utms_cc              t1
+  left join  samcart_utm_deduped        t2
   using (charge_id)
 )
 
