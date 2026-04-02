@@ -5,75 +5,75 @@
 config { type: "view" }
 
 with coc_trans as (
-select
+  select
     date(dateCreated) as transaction_date,
---    DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
-    datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") transaction_dt,
+    datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") as transaction_dt,
     clientOrderId as transaction_id,
     case
-        when txnType = 'SALE' then 'charge'
-        when txnType = 'REFUND' then 'refund'
-        when txnType = 'VOID' then 'void'
+      when txnType = 'SALE' then 'charge'
+      when txnType = 'REFUND' then 'refund'
+      when txnType = 'VOID' then 'void'
     end as transaction_type,
     case
-        when txnType = 'REFUND' then -cast(totalAmount as numeric)
-        else cast(totalAmount as numeric)
+      when txnType = 'REFUND' then -cast(totalAmount as numeric)
+      else cast(totalAmount as numeric)
     end as transaction_amount,
-    -- transaction_fee,
-      json_extract_scalar(item, '$.product') as product_name,
-      json_extract_scalar(item, '$.price') as product_price,
+    (
+      select string_agg(distinct json_extract_scalar(item, '$.product'), ', ')
+      from unnest(json_extract_array(items)) as item
+    ) as product_name,
     emailAddress as customer_email,
     merchantTxnId as charge_id,
     case
-        when lower(merchant) like '%paypal%' then 'paypal'
-        when lower(merchant) like '%stripe%' then 'stripe'
-        when lower(merchant) like '%checkout%prod%' then 'checkout.com'
+      when lower(merchant) like '%paypal%' then 'paypal'
+      when lower(merchant) like '%stripe%' then 'stripe'
+      when lower(merchant) like '%checkout%prod%' then 'checkout.com'
     end as merchant,
     country
-    -- select dateCreated
-from `eng-particle-420006.airbyte.checkoutchamp_transactions`, unnest(json_extract_array(items)) as item
-where
-    lower(merchant) not like '%test%'
+  from `eng-particle-420006.airbyte.checkoutchamp_transactions`
+  where lower(merchant) not like '%test%'
 
-UNION ALL
 
-select
-    date(dateCreated) as transaction_date,
-    DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
-    --datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") transaction_dt,
-    clientOrderId as transaction_id,
-    case
-        when txnType = 'SALE' then 'charge'
-        when txnType = 'REFUND' then 'refund'
-        when txnType = 'VOID' then 'void'
-    end as transaction_type,
-    case
-        when txnType = 'REFUND' then -cast(totalAmount as numeric)
-        else cast(totalAmount as numeric)
-    end as transaction_amount,
-    -- transaction_fee,
-      json_extract_scalar(item, '$.product') as product_name,
-      json_extract_scalar(item, '$.price') as product_price,
-    emailAddress as customer_email,
-    merchantTxnId as charge_id,
-    case
-        when lower(merchant) like '%paypal%' then 'paypal'
-        when lower(merchant) like '%stripe%' then 'stripe'
-        when lower(merchant) like '%checkout%prod%' then 'checkout.com'
-    end as merchant,
-    country,
-    -- select dateCreated
-from (SELECT o.*
-from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074` o
-  left join  `eng-particle-420006.airbyte.checkoutchamp_transactions` n
-    on n.transactionID = o.transactionID
-  where n.transactionId is null), unnest(json_extract_array(items)) as item
-where
-    lower(merchant) not like '%test%'
+-- UNION ALL
+
+-- select
+--     date(dateCreated) as transaction_date,
+--     DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
+--     --datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") transaction_dt,
+--     clientOrderId as transaction_id,
+--     case
+--         when txnType = 'SALE' then 'charge'
+--         when txnType = 'REFUND' then 'refund'
+--         when txnType = 'VOID' then 'void'
+--     end as transaction_type,
+--     case
+--         when txnType = 'REFUND' then -cast(totalAmount as numeric)
+--         else cast(totalAmount as numeric)
+--     end as transaction_amount,
+--     -- transaction_fee,
+--       json_extract_scalar(item, '$.product') as product_name,
+--       json_extract_scalar(item, '$.price') as product_price,
+--     emailAddress as customer_email,
+--     merchantTxnId as charge_id,
+--     case
+--         when lower(merchant) like '%paypal%' then 'paypal'
+--         when lower(merchant) like '%stripe%' then 'stripe'
+--         when lower(merchant) like '%checkout%prod%' then 'checkout.com'
+--     end as merchant,
+--     country,
+--     -- select dateCreated
+-- from (SELECT o.*
+-- from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074` o
+--   left join  `eng-particle-420006.airbyte.checkoutchamp_transactions` n
+--     on n.transactionID = o.transactionID
+--   where n.transactionId is null), unnest(json_extract_array(items)) as item
+-- where
+--     lower(merchant) not like '%test%'
 )
 
 select *
 from coc_trans
+
 order by transaction_date desc
 
 -- select

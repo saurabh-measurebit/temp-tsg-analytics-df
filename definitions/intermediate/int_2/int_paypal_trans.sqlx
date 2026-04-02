@@ -15,8 +15,8 @@ cc_transactions as (
         charge_id,
         transaction_type,
         case
-            when transaction_type = "refund" then ABS(cast(product_price as numeric)) *-1
-            else cast(product_price as numeric)
+            when transaction_type = "refund" then ABS(cast(transaction_amount as numeric)) *-1
+            else cast(transaction_amount as numeric)
         end
         as transaction_amount, -- using product_price rather than original transaction_amount since a transaction can contain one or more products
         product_name,
@@ -97,6 +97,7 @@ unioned as (
 
 select *
 from unioned
+
 
 
 -- select
