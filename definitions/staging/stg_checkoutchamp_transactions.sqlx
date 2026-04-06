@@ -39,7 +39,6 @@ UNION ALL
 select
     date(dateCreated) as transaction_date,
     DATETIME(TIMESTAMP(dateCreated), "America/New_York") as transaction_dt,
-    --datetime(timestamp(concat(dateCreated, ' UTC')), "America/New_York") transaction_dt,
     clientOrderId as transaction_id,
     case
         when txnType = 'SALE' then 'charge'
@@ -50,9 +49,10 @@ select
         when txnType = 'REFUND' then -cast(totalAmount as numeric)
         else cast(totalAmount as numeric)
     end as transaction_amount,
-    -- transaction_fee,
-      json_extract_scalar(item, '$.product') as product_name,
-      json_extract_scalar(item, '$.price') as product_price,
+    (
+      select string_agg(distinct json_extract_scalar(item, '$.product'), ', ')
+      from unnest(json_extract_array(items)) as item
+    ) as product_name,
     emailAddress as customer_email,
     merchantTxnId as charge_id,
     case
@@ -60,13 +60,12 @@ select
         when lower(merchant) like '%stripe%' then 'stripe'
         when lower(merchant) like '%checkout%prod%' then 'checkout.com'
     end as merchant,
-    country,
-    -- select dateCreated
+    country
 from (SELECT o.*
 from `tsg-transaction-data.checkout_champ_export.checkout_champ_transactions_8589937074` o
   left join  `eng-particle-420006.airbyte.checkoutchamp_transactions` n
     on n.transactionID = o.transactionID
-  where n.transactionId is null), unnest(json_extract_array(items)) as item
+  where n.transactionId is null)
 where
     lower(merchant) not like '%test%'
 )
@@ -75,6 +74,7 @@ select *
 from coc_trans
 
 order by transaction_date desc
+
 
 -- select
 --     date(dateCreated) as transaction_date,
